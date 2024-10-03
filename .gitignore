@@ -1,0 +1,6 @@
+.venv
+.source.txt
+*.dbg
+*.sym
+*.vs
+*.din
