@@ -39,11 +39,8 @@ $bc00 f
 $c000 - $c7ff font
 $c800
 $cc00
-$d000 ?? char + vic
-$d400 ? char
-$d800 ? char
-$dc00 ? char
-$e000 ? kernal
+$d000 - $dfff completely unusable
+$e000 ? kernal  kernal cannot be disabled unless interrupts are disabled
 $e400 ? kernal
 $e800 ? kernal
 $ec00 ? kernal

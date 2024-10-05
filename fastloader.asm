@@ -1,6 +1,5 @@
 .file [name="fastloader.prg", segments="PART2,VECTOR,CMD,START,FCODE", allowOverlap]
 
-
 .const TARGET = $0801  // where to load the data to memory
 .const TRACK = 1  // 18 what track to load from
   // for sectors, see sector_table at the end
@@ -34,6 +33,11 @@ main:
     jsr $fdf9 // filname
     jsr $f34a // open
 
+
+    // Upload code to floppy
+
+
+
     sei
     lda #VIC_OUT | DATA_OUT // CLK=0 DATA=1
     sta $DD00 // we're not ready to receive
@@ -43,7 +47,7 @@ wait_fast:
     bit $DD00
     bvs wait_fast // wait for CLK=1 (inverted read!)
 
-    lda #(sector_table_end - sector_table -1) // number of sectors  (-1 to accomodat the last $FF)
+    lda #(sector_table_end - sector_table) // number of sectors  (-1 to accomodat the last $FF)
     sta seccnt
     ldy #0
 get_rest_loop:  
@@ -122,6 +126,13 @@ memory_execute_end:
 //----------------------------------------------------------------------
 
 .segment FCODE [start=$0206]
+// This code will be used for initial bootstrapping only
+// $0206 - $027e
+//   - $0200-$0258  Input buffer, storage area for data read from screen (89 bytes).
+//   - $0259-$0262  Logical numbers assigned to files (10 bytes, 10 entries).
+//   - $0263-$026C  Device numbers assigned to files (10 bytes, 10 entries).
+//   - $026D-$0276  Secondary addresses assigned to files (10 bytes, 10 entries).
+//   - $0277-$0280  Keyboard buffer (10 bytes, 10 entries).
 
 .const F_DATA_OUT = $02
 .const F_CLK_OUT  = $08
@@ -148,9 +159,9 @@ read_loop:
     sei
     
     
-    // inc $f9 or 2x nop je porad jeste ok, 6taktu je ok, 7 uz neni, 2xpla=8taktu je ok, Asi je limit na 2byte
-    ldx #$02
-    stx $f9
+    // turn this on if you want to skip 2 <track,sector> bytes from being transmitted from the floppy
+    // ldx #$02
+    // stx $f9
 send_loop:
 // we can use $f9 (JOBNUMBER) as the byte counter, since we'll return it to 0
 // so it holds the correct buffer number "0" when we read the next sector
@@ -196,6 +207,7 @@ wait_c64:
     beq read_loop
 
 end:
+    // rts
     jmp *  // all is read, floppy will hang
 
 enc_tab:
@@ -203,8 +215,8 @@ enc_tab:
     .byte %1110, %0110, %1100, %0100, %1010, %0010, %1000, %0000
 
 sector_table:
-    .byte 4,8,4     // 4 je prvni, 8 je druha cast keyb
+    .byte 0,1     // 4 je prvni, 8 je druha cast keyb
 sector_table_end:  // end is needed here because it calulates the size of the sector_table
 filler:
-    .byte $ff, $ff, $ff, $ff, $ff, $ff, $ff  // chova se divne, kdyz pretece
+    // .byte $ff, $ff, $ff, $ff, $ff, $ff, $ff  // chova se divne, kdyz pretece
 }
