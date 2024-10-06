@@ -64,7 +64,8 @@ os.system("c1541 -format ' - hondani - ,2025' d64 " + DISK_IMAGE)
 
 # Put fastloader on it as the only visible file in directory
 # os.system(f"c1541 -attach {DISK_IMAGE} -write fastloader.prg fastloader")
-os.system(f"c1541 -attach {DISK_IMAGE} -write keyb.prg keyb")
+# os.system(f"c1541 -attach {DISK_IMAGE} -write keyb.prg keyb")
+os.system(f"c1541 -attach {DISK_IMAGE} -write verticaler.prg verticaler")
 
 # Iterate over files in list
 for file in files:

@@ -1,0 +1,51 @@
+
+Environment:
+
+Variable           Setting
+
+CC65_SRC           <cc65sourcepath>                              (only needed to build the dynlinking targets)
+CC65_INC           <cc65sourcepath>/include                      (only needed to build the dynlinking targets)
+
+Note:
+Under Cygwin, CC65_SRC must be in *NIX path format (e.g. /cygdrive/c/cc65),
+and CC65_INC must be in Windows path format with forward slashes (e.g. C:/cc65/include).
+
+
+Path, loader only:
+Name               Source                                        Path setting
+
+cc65source         http://www.cc65.org/                          <cc65source>    (only needed to build the dynlinking targets)
+ca65               http://www.cc65.org/                          <cc65path>/bin
+ld65               http://www.cc65.org/                          <cc65path>/bin
+ar65               http://www.cc65.org/                          <cc65path>/bin
+
+make               http://www.gnu.org/software/make/             <makepath>
+gcc                http://gcc.gnu.org/                           <gccpath>       (needed to build cc1541)
+
+perl               http://www.perl.org/                          <perlpath>      (needed to generate a symbols file for the make prg target in loader/src)
+
+zip                                                              <zippath>       (needed to make a loader binary archive for the make prg target in loader/src)
+
+
+Path, compressed files:
+Name               Source                                        Path setting
+
+exomizer           http://hem.bredband.net/magli143/exo/         <exopath>
+pucrunch           http://www.cs.tut.fi/~albert/Dev/pucrunch/    <pupath>        (build from source, binaries are outdated)
+doynamite          http://csdb.dk/release/?id=118678             <doynamitepath>
+bb (ByteBoozer)    http://csdb.dk/release/?id=33093              <bbpath>
+
+java               http://java.com/                              <javapath>/bin  (needed to run the compressed file converter for Doynax-LZ, Byteboozer and Taboo Levelcrush)
+javac              http://java.com/                              <javapath>/bin  (needed to build the compressed file converter for Doynax-LZ, Byteboozer and Taboo Levelcrush)
+
+dosbox             http://wwww.dosbox.com/                       <dosboxpath>    (needed on Win64 and MAC OS X systems to run tools/CRUSH.exe to compress files for Taboo Levelcrush)
+wine               http://www.winehq.org/                        <winepath>      (needed on non-Windows and non-MAC OS X systems to run tools/CRUSH.exe to compress files for Taboo Levelcrush)
+
+
+Path, samples folder:
+Name               Source                                        Path setting
+
+c1541              http://vice-emu.sourceforge.net/              <vicepath>
+vice               http://vice-emu.sourceforge.net/              <vicepath>
+plus4emu           http://plus4emu.sourceforge.net/              <plus4emupath>  (only needed if using the NO_VICE=1 make run switch on Plus/4 and MAC OS X)
+yape               http://yape.homeserver.hu/                    <yapepath>      (only needed if using the NO_VICE=1 make run switch on Plus/4 and Windows)

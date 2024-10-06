@@ -1,5 +1,6 @@
 // This code has to be copiled before all other parts that do use this fastloader.
-// Because it is included in other asm files split by 32 bytes chunks. Chunks are the uploaded to floppy.
+// This code is not imported anywhere because it is included in other asm files as binary, 
+// split by 32 bytes chunks. Chunks are the uploaded to floppy.
 
 .file [name="floppy_code.floppy_prg", type="bin", segments="FLOPPYCODE"]
 
@@ -21,7 +22,7 @@ start1541:
     sta $06
 read_loop:
     ldx sec_index
-    lda sector_table,x  // TODO seznam sectoru se musi ovladat pri spousteni fastloaderu
+    lda sector_table,x
     inc sec_index
     bmi end   // todle je podezrely, protoze je reaguje na negative flag toho inc, ale to je irrelevantni
     sta $07
@@ -93,9 +94,3 @@ sector_table:
 sector_table_end:  // end is needed here because it calulates the size of the sector_table
 useless_filler: .byte $ff, $ff, $ff, $ff, $ff, $ff
 }
-
-
-// Takze jak dal:
-// ted se naloadoval secotr 0-7 (protoze se neprenesou posledni 2 bajty)
-// Ted udelej, aby se cela loadovaci procedura volala s parametrama prepouzitelne
-// fastload(c64memory_start, track, [sectors])

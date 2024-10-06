@@ -1,3 +1,4 @@
+
 .namespace PART3_ns {
 
 // #import "fm_lookups.asm"
@@ -15,6 +16,8 @@
     BasicUpstart2(PART3_ns.start)
 #endif
 
+#import "lib_fast_load.asm"  // at $9000
+
 *= $2000 "Part2_code"
 start:
     // start music
@@ -24,6 +27,10 @@ start:
     jsr music.init
 
     init_irq()
+
+    fastloader_init()  // call this only once to upload code to the floppy
+    fastloader_load($38, 2, 8)  // load from track 2, 8 sectors in total and store to memory $2800
+
     jmp *
 
 .macro init_irq() {
@@ -40,7 +47,7 @@ start:
     lda #$1b
     ora #$20  // bit 5 (hires)
     sta $d011
-    lda #$0  // where rastar interrupt will be triggered
+    lda #$0  // where raster interrupt will be triggered
     sta $d012
     cli
 }
@@ -50,11 +57,11 @@ irq1:
     inc $d020
     jsr music.play 
     dec $d020
-    dec $d020
-    jsr up_new_line
-    jsr up_copy_screen
+    // dec $d020
+    // jsr up_new_line
+    // jsr up_copy_screen
 !:
-    inc $d020
+    // inc $d020
     pla
     tay
     pla
