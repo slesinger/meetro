@@ -37,6 +37,13 @@ Will load font_matrix (prg)
 
 transition to the next part will be with blank screen and music playing
 
+## Krill's Fastloader
+
+### Compile library binaries
+
+In tools/KrillsLoader/loader/src, enter ```make prg INSTALL=2800 RESIDENT=9000 ZP=90```
+
+
 ## video
 
 Possible SID locations:
@@ -45,7 +52,7 @@ $1000 - $1bff
 Possible code locations:
 $1c00 - $1fff, $9200 - $9fff
 
-Possible screen memory locations:  (Bank1 9, Bank2 14, Bank3 10, Bank4 0), 3+30 usable frames
+Possible screen memory locations:  (Bank1 3+6, Bank2 14, Bank3 2+8, Bank4 0), 5+28 usable frames
 $0400  fryba 1
 $0800  fryba 2
 $0c00  fryba 3
@@ -63,8 +70,8 @@ $4000 - $47ff font
 $4800, each $0400
 
 $8000 - $87ff font
-$8800 2
-$8c00 3
+$8800 2 fryba 4
+$8c00 3 fryba 5
 Unusefull font shadow $9000-$9fff, to be used for loader code
 $a000 8
 $a400 9
@@ -76,7 +83,7 @@ $b800 e
 $bc00 f
 
 Whole bank4 is beeter to use for something else than frames
-$c000 - $c7ff font  ??
+$c000 - $c7ff decided not to use
 $c800 possible frame, does not make sense
 $cc00 possible frame, does not make sense
 $d000 - $dfff completely unusable
@@ -85,18 +92,36 @@ $e400 ? kernal
 $e800 ? kernal
 $ec00 ? kernal
 
+Out of which there are following video frame blocks:
+$0400 - $0fff 3 frames Fryba1
+$2800 - $3fff 6 frames block a1
+$4800 - $7fff 14frames block b
+($8800 - $8fff 2 frames Fryba2)
+$a000 - $bfff 8 frames block a2
+
+While loading blocks a1+a2 and b will alternate.
+Sequence of playback:
+Fryba looping until a1+a2 loaded
+a1+a2 playing while b loading
+b loading while a1+a2 playing
+repeat
 
 /*
 Demo loading and progress strategy:
 
-Autostart fastloader.prg > load $182
+Autostart fastloader.prg > load start $182
+it will contain blocks:
 Load keyb.prg at $0810 - $09d0 (2 sectors), jmp $0810
 Load font_matrix.prg at $0a00 - $0c00 (1 sector)
 Load music at 1000
-Load font at 2000
+Load font at 2000-27ff
+Load installer at 2800 - 3b63
+Load Krills loader 3c00 - 3dff
 jmp $0a00
-disable basic, kernal
-Load video code at 9000
+ - reloacate Krills loader to 9000
+ - run Krills install routine at $37A6
+ - disable basic, kernal
+Load video code at 9200
 
 
 
