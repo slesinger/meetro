@@ -11,6 +11,7 @@
 .const FRAME_DELAY_FOR_FRYBA = 8
 .const BORDER_COLOR = $0f
 .const BACKGROUND_COLOR = $0b
+.const fryba_scroll_pointer_zp = $02  // and $fc
 
 #if RUNNING_ALL
     // Started as whole compilation of parts
@@ -25,13 +26,9 @@
     .fill font.getSize(), font.get(i)
 
     // Include Fryba
-    // .var fryba1 = LoadBinary("data/F1.bin", BF_C64FILE)
-    // *=$0400 "Part4_Fryba1.bin"
-    // .fill fryba1.getSize(), fryba1.get(i)
-
-    // .var fryba2 = LoadBinary("data/F2.bin", BF_C64FILE)
-    // *=$8800 "Part4_Fryba2.bin"
-    // .fill fryba2.getSize(), fryba2.get(i)
+    .var fryba5 = LoadBinary("data/F5.bin", BF_C64FILE)
+    *=$6400 "Part4_Fryba5.bin"
+    .fill fryba5.getSize(), fryba5.get(i)
 
     *= install "loader_install" // same as install jsr
     .var installer_c64 = LoadBinary("tools/krill194/loader/build/install-c64.prg", BF_C64FILE)
@@ -41,7 +38,9 @@
     .var loader_c64 = LoadBinary("tools/krill194/loader/build/loader-c64.prg", BF_C64FILE)
     loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
 
+
 #endif
+
 
 *= $1c00 "Part4_code"
 start:
@@ -62,6 +61,14 @@ start:
     sta $db00,x
     dex
     bne !-
+    // fill $d800 line 22 with breaking news color
+    lda #$00
+    ldx #$27
+!:
+    sta $db6f,x
+    dex
+    bne !-
+
     lda #BACKGROUND_COLOR
     sta $d021
 
@@ -84,6 +91,12 @@ start:
 
 // THIS HAS TO HAPPEN EVERY TIME
     distribute_font()
+    // set zero page indirect pointer to fryba_scroll_text
+    lda #<fryba_scroll_text+50
+    sta fryba_scroll_pointer_zp
+    lda #>fryba_scroll_text
+    sta fryba_scroll_pointer_zp + 1
+    // setup irq
     init_irq()
 
 load_loop:
@@ -120,29 +133,22 @@ loading_sempahore:  // 0: load next part of video, non-zero: wait
 file_b:   .text "BA"  //filename on diskette
           .byte $00
 
+
 current_frame_index:
     .byte 0
 current_frame_countdown:
     .byte FRAME_DELAY
 
 // $d018 (upper 4bits +$08 font location)
-screen_locations_fryba:
-    .byte   $18, $28, $38                                                                 // bank 1
-    .byte        $20, $30                                                                 // bank 3
-screen_locations_a1a2:
+screen_locations_a:
     .byte        $20, $30, $40, $50, $60, $70, $80  // bank 2
 screen_locations_b:
     .byte        $90, $a0, $b0, $c0, $d0, $e0, $f0  // bank 2
+scroll_locations_a:
+    .byte        $4b, $4f, $53, $57, $5b, $5f, $63  // bank 2 4800, 4c00, 5000, 5400, 5800, 5c00, 6000
+scroll_locations_b:
+    .byte        $67, $6b, $6f, $73, $77, $7b, $7f  // bank 2 6400, 6800, 6c00, 7000, 7400, 7800, 7c00
 
-// $dd00 AND x
-screen_banks_fryba:
-    .byte  3,3,3                             // bank 1  3x
-    .byte      1,1                           // bank 3  3x
-// screen_banks_a1a2:
-//     .byte                      3,3, 3,3,3,3  // bank 1  6x
-//     .byte                  1,1,1,1, 1,1,1,1  // bank 3  8x
-// screen_banks_b:
-//     .byte    2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2  // bank 2  14x
 
 .macro init_irq() {
     sei
@@ -170,21 +176,30 @@ irq1:
     wait(1)
     nop  // stabilize raster
     nop
+    nop
+    nop
     lda #$01   // render scroll line
     sta $d020
     sta $d021
     //increase fine scroll
     lda $d016
     and #%11110000
-    sta $d016
-    lda current_frame_countdown
-    lsr  // because countdown if from 0-15 but we need cursor width 0-7
+    // sta $d016
+    ldx current_frame_countdown
+    dex
+    txa
     and #%00000111
-    ora $d016
-    sta $d016
+    cmp #0
+    bne !+
+    inc $d020  // increase lo nybble
+    inc fryba_scroll_pointer_zp  // increase lo nybble
+    bne !+
+    inc fryba_scroll_pointer_zp + 1  // increase hi nybble
+!:  ora $d016
+    // sta $d016
 
     // wait 8 line
-    wait(93)
+    wait(107)
     nop
     lda $d016
     and #%11111000  // reset fine scroll
@@ -212,44 +227,59 @@ irq1:
     sta current_frame_countdown  // reset delay counter
 
     // Route between Fryba and video
+fryba_route:
     clc  // clear carry (CLC $18) flag means route to Fryba, set carry (SEC $38)flag means route to video
-sec // skip Fryba temporarily
-    bcs route_blocks
-
+    bcc fryba_start
+    jmp route_blocks
+                // 5 cycles by 7 frames at 16 raster screen per picture = 35 frames
+                // 1 hard scroll position per picture
     // Fryba
+fryba_start:
     lda #FRAME_DELAY_FOR_FRYBA
     sta current_frame_countdown  // overwrite delay because Fryba is faster
     inc current_frame_index
     lda current_frame_index
     cmp #5  // Fryba has fixed 5 frames
     bne display_fryba_frame
+    dec fryba_full_cycles
+    lda fryba_full_cycles
+    beq stop_fryba
     lda #$00  // repeat Fryba until video is loaded
     sta current_frame_index
 display_fryba_frame:
     ldx current_frame_index
-    lda screen_locations_fryba,x
+    // pre-fill scroll text first
+    lda scroll_locations_b,x
+    sta tf + 2
+    ldy #0
+sf: lda (fryba_scroll_pointer_zp),y
+    clc
+    adc #228  // shift to the right font location
+tf: sta $ff70,y
+    iny
+    cpy #40
+    bne sf
+    lda screen_locations_b,x
     sta $d018
-    // switch bank // https://csdb.dk/forums/?roomid=11&topicid=112031&firstpost=2
-
-    lda screen_banks_fryba,x
-    cmp current_bank
-    beq !+  // do not switch bank because it is the same
-    sta current_bank
-    lda $dd02
-    tay
-    ora 3
-    sta $dd02
-        // pokud je tento blok zapnut, tak se nahravani podela
-        lda $dd00
-        and #$fc
-        ora screen_banks_fryba,x
-        sta $dd00
-    tya
-    sta $dd02  //restore
-!:
     jmp skip_frame_update
+stop_fryba:
+    lda #$38
+    sta fryba_route  // next time route to video instead of Fryba
+    lda #$00  // end of block, switch to video
+    sta current_frame_index
+    lda sf + 1
+    sta sf1 + 1
+    jmp display_a1a2_frame
+
 current_bank:
     .byte 3
+fryba_full_cycles:
+    .byte 10  // repeat 7 frames 10 times
+fryba_scroll_text:
+    .encoding "screencode_upper"
+    .text "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+    .text "BREAKING@NEWS[[[@@THE@SUN@SIGNED@OFF@@THIS@IS@THE@END@OF@THE@WORLD@AS@WE@KNOW@IT[@"
+    .text "THE@SUN@HAS@ESCAPED@THE@SOLAR@SYSTEM[@CHAOS@UNFOLDS@AS@ENTIRE@ELECTRONICS@INFRASTRUCTURE@COLLAPSES[@ONLY@COMMODORE@MACHINES@REMAIN@FUNCTIONAL[@HUMANITY@SCRAMBLES@TO@ADAPT[@STAY@TUNED@FOR@DEVELOPMENTS[[[@END@OF@TRANSMISSION[@"
 
     // Route between a1a2 and b
 route_blocks:
@@ -269,7 +299,18 @@ a1a2:  // represents block B 0-6
     jmp display_b_frame
 display_a1a2_frame:
     ldx current_frame_index
-    lda screen_locations_a1a2,x
+    // pre-fill scroll text first
+    lda scroll_locations_a,x
+    sta tf1 + 2
+    ldy #0
+sf1:lda (fryba_scroll_pointer_zp),y
+    clc
+    adc #228  // shift to the right font location
+tf1:sta $ff70,y
+    iny
+    cpy #40
+    bne sf1
+    lda screen_locations_a,x
     sta $d018
     jmp skip_frame_update
 
@@ -286,6 +327,17 @@ b:  // represents block B 7-13
     jmp display_a1a2_frame
 display_b_frame:
     ldx current_frame_index
+    // pre-fill scroll text first
+    lda scroll_locations_b,x
+    sta tf2 + 2
+    ldy #0
+sf2:lda (fryba_scroll_pointer_zp),y
+    clc
+    adc #228  // shift to the right font location
+tf2:sta $ff70,y
+    iny
+    cpy #40
+    bne sf2
     lda screen_locations_b,x
     sta $d018
     jmp skip_frame_update
