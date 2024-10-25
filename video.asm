@@ -91,10 +91,10 @@ start:
 
 // THIS HAS TO HAPPEN EVERY TIME
     distribute_font()
-    // set zero page indirect pointer to fryba_scroll_text
-    lda #<fryba_scroll_text+50
+    // set zero page indirect pointer to scroll_text
+    lda #<scroll_text
     sta fryba_scroll_pointer_zp
-    lda #>fryba_scroll_text
+    lda #>scroll_text
     sta fryba_scroll_pointer_zp + 1
     // setup irq
     init_irq()
@@ -102,51 +102,55 @@ start:
 load_loop:
     // wait for signal to start loading
     lda loading_sempahore
-    // inc $d020
     bne load_loop
     lda #$01
     sta loading_sempahore  // prevent loading without trigger from irq1
     // start loading
-    // dec $d020
     clc
     ldx #<file_b  // Vector pointing to a string containing loaded file name
     ldy #>file_b
+    // inc $d020
     jsr loadraw
+    // dec $d020
     inc file_b + 1  // increment file name  B0 > B1
-
-    // wait for ? blocks to complete display
-    // inc $d020  // indicate that loading is finished
 
     // Check if filename is set to BN, it does not exist, that means end
     lda file_b + 1
     cmp #$4f  // B'N'+1
     bne load_loop
+wait_for_last_block_to_playback:
+    lda screen_index
+    cmp #13
+    bne wait_for_last_block_to_playback
 
-
+    sei
+    lda #<irq2
+    sta $0314
+    lda #>irq2
+    sta $0315
+    cli
 end_of_video:
     inc $d020
     jmp end_of_video
 
 loading_sempahore:  // 0: load next part of video, non-zero: wait
-    .byte 1  //initially wait because first part is pre-loaded
+    .byte 0  //initially load, first part is pre-loaded but load the next one immediately
 
 file_b:   .text "BA"  //filename on diskette
           .byte $00
 
 
-current_frame_index:
+screen_index:  // moview screen, every FRAME_DELAY of frames
     .byte 0
-current_frame_countdown:
+frame_index:  // every intrq raster screen is a frame, interval <0 - FRAME_DELAY) backwards
     .byte FRAME_DELAY
 
 // $d018 (upper 4bits +$08 font location)
-screen_locations_a:
+screen_locations:
     .byte        $20, $30, $40, $50, $60, $70, $80  // bank 2
-screen_locations_b:
     .byte        $90, $a0, $b0, $c0, $d0, $e0, $f0  // bank 2
-scroll_locations_a:
+scroll_locations:
     .byte        $4b, $4f, $53, $57, $5b, $5f, $63  // bank 2 4800, 4c00, 5000, 5400, 5800, 5c00, 6000
-scroll_locations_b:
     .byte        $67, $6b, $6f, $73, $77, $7b, $7f  // bank 2 6400, 6800, 6c00, 7000, 7400, 7800, 7c00
 
 
@@ -166,40 +170,37 @@ scroll_locations_b:
     sta $d01a
     lda #$e0  // where raster interrupt will be triggered
     sta $d012
-    lda #$1b
+    lda #$1a
     sta $d011
     cli
 }
-
+d016_backup:  // backup of $d016
+    .byte 0
 irq1:
     asl $d019  // ack irq
-    wait(1)
-    nop  // stabilize raster
+    wait(8)
     nop
     nop
     nop
-    lda #$01   // render scroll line
-    sta $d020
-    sta $d021
     //increase fine scroll
     lda $d016
     and #%11110000
-    // sta $d016
-    ldx current_frame_countdown
+    sta $d016
+    //increase fine scroll - step 2
+    ldx frame_index
     dex
     txa
     and #%00000111
-    cmp #0
-    bne !+
-    inc $d020  // increase lo nybble
-    inc fryba_scroll_pointer_zp  // increase lo nybble
-    bne !+
-    inc fryba_scroll_pointer_zp + 1  // increase hi nybble
-!:  ora $d016
-    // sta $d016
-
+    ora $d016
+    sta $d016
+    
+    ldx #$01   // render scroll line
+    stx $d020
+    stx $d021
+    sta d016_backup
     // wait 8 line
-    wait(107)
+    wait(86)
+    nop
     nop
     lda $d016
     and #%11111000  // reset fine scroll
@@ -211,45 +212,60 @@ irq1:
     lda #BACKGROUND_COLOR
     sta $d021
 
-    // inc $d020
+    // hardscroll
+    lda d016_backup
+    and #%00000111
+    bne !+
+    inc fryba_scroll_pointer_zp  // increase lo nybble
+    bne !+
+    inc fryba_scroll_pointer_zp + 1  // increase hi nybble
+!:
+
     jsr music.play 
-    // dec $d020
 
     // Count down to next frame
-      // decrease current_frame_countdown by 1, check if it is zero. 
+      // decrease frame_index by 1, check if it is zero. 
       // If zero continue to frame update, else skip frame update
-    dec current_frame_countdown
-    beq !+
-    jmp skip_frame_update
+    dec frame_index
+    lda frame_index
+    // call hardscroll every 8th frame
+    and #%00000111
+    cmp #0
+    bne !+
+    jsr hardscroll
 !:
-    // Frame_update
+    lda frame_index
+    beq !+
+    jmp skip_screen_update
+!:
+    // Screen update
     lda #FRAME_DELAY
-    sta current_frame_countdown  // reset delay counter
+    sta frame_index  // reset delay counter
 
     // Route between Fryba and video
 fryba_route:
     clc  // clear carry (CLC $18) flag means route to Fryba, set carry (SEC $38)flag means route to video
     bcc fryba_start
-    jmp route_blocks
+    jmp next_screen
                 // 5 cycles by 7 frames at 16 raster screen per picture = 35 frames
                 // 1 hard scroll position per picture
     // Fryba
 fryba_start:
     lda #FRAME_DELAY_FOR_FRYBA
-    sta current_frame_countdown  // overwrite delay because Fryba is faster
-    inc current_frame_index
-    lda current_frame_index
+    sta frame_index  // overwrite delay because Fryba is faster
+    inc screen_index
+    lda screen_index
     cmp #5  // Fryba has fixed 5 frames
     bne display_fryba_frame
     dec fryba_full_cycles
     lda fryba_full_cycles
     beq stop_fryba
     lda #$00  // repeat Fryba until video is loaded
-    sta current_frame_index
+    sta screen_index
 display_fryba_frame:
-    ldx current_frame_index
+    ldx screen_index
     // pre-fill scroll text first
-    lda scroll_locations_b,x
+    lda scroll_locations+7,x
     sta tf + 2
     ldy #0
 sf: lda (fryba_scroll_pointer_zp),y
@@ -259,48 +275,64 @@ tf: sta $ff70,y
     iny
     cpy #40
     bne sf
-    lda screen_locations_b,x
+    lda screen_locations+7,x
     sta $d018
-    jmp skip_frame_update
+    jmp skip_screen_update
 stop_fryba:
     lda #$38
     sta fryba_route  // next time route to video instead of Fryba
     lda #$00  // end of block, switch to video
-    sta current_frame_index
-    lda sf + 1
-    sta sf1 + 1
-    jmp display_a1a2_frame
+    sta screen_index
+    sta loading_sempahore  // allow loading next part
+    jmp display_frame
 
-current_bank:
-    .byte 3
 fryba_full_cycles:
     .byte 10  // repeat 7 frames 10 times
-fryba_scroll_text:
+scroll_text:
     .encoding "screencode_upper"
     .text "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
     .text "BREAKING@NEWS[[[@@THE@SUN@SIGNED@OFF@@THIS@IS@THE@END@OF@THE@WORLD@AS@WE@KNOW@IT[@"
     .text "THE@SUN@HAS@ESCAPED@THE@SOLAR@SYSTEM[@CHAOS@UNFOLDS@AS@ENTIRE@ELECTRONICS@INFRASTRUCTURE@COLLAPSES[@ONLY@COMMODORE@MACHINES@REMAIN@FUNCTIONAL[@HUMANITY@SCRAMBLES@TO@ADAPT[@STAY@TUNED@FOR@DEVELOPMENTS[[[@END@OF@TRANSMISSION[@"
 
-    // Route between a1a2 and b
-route_blocks:
-    clc  // clear carry (CLC $18) flag means route to a1a2, set carry (SEC $38)flag means route to b
-    bcs b
+next_screen:
+    inc screen_index
+    lda screen_index
+    cmp #7  // max frames in video block
+    bne framenot7
+frame7:
+    lda #$00  
+    sta loading_sempahore  // allow loading next part
+    jmp display_frame
+framenot7:
+    cmp #14  // max frames in memory
+    bne display_frame
+frame14:
+    lda #$00
+    sta screen_index // end of block
+    sta loading_sempahore  // allow loading next part
 
-a1a2:  // represents block B 0-6
-    inc current_frame_index
-    lda current_frame_index
-    cmp #7  // max frames in video block a1+a2
-    bne display_a1a2_frame
-    lda #$38
-    sta route_blocks
-    lda #$00  // end of block, switch to block b
-    sta current_frame_index
-    sta loading_sempahore
-    jmp display_b_frame
-display_a1a2_frame:
-    ldx current_frame_index
+display_frame:
+    ldx screen_index
+    lda screen_locations,x
+    sta $d018
+    jsr hardscroll
+
+skip_screen_update:
+    pla
+    tay
+    pla
+    tax
+    pla
+    rti
+
+irq2:
+    jsr music.play 
+    jmp skip_screen_update
+
+hardscroll:
     // pre-fill scroll text first
-    lda scroll_locations_a,x
+    ldx screen_index
+    lda scroll_locations,x
     sta tf1 + 2
     ldy #0
 sf1:lda (fryba_scroll_pointer_zp),y
@@ -310,45 +342,7 @@ tf1:sta $ff70,y
     iny
     cpy #40
     bne sf1
-    lda screen_locations_a,x
-    sta $d018
-    jmp skip_frame_update
-
-b:  // represents block B 7-13
-    inc current_frame_index
-    lda current_frame_index
-    cmp #7  // max frames in video block a1+a2
-    bne display_b_frame
-    lda #$18
-    sta route_blocks
-    lda #$00  // end of block, switch to block b
-    sta current_frame_index
-    sta loading_sempahore
-    jmp display_a1a2_frame
-display_b_frame:
-    ldx current_frame_index
-    // pre-fill scroll text first
-    lda scroll_locations_b,x
-    sta tf2 + 2
-    ldy #0
-sf2:lda (fryba_scroll_pointer_zp),y
-    clc
-    adc #228  // shift to the right font location
-tf2:sta $ff70,y
-    iny
-    cpy #40
-    bne sf2
-    lda screen_locations_b,x
-    sta $d018
-    jmp skip_frame_update
-
-skip_frame_update:
-    pla
-    tay
-    pla
-    tax
-    pla
-    rti
+    rts
 
 .macro distribute_font() {
     ldx #0
