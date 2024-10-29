@@ -1,5 +1,7 @@
 #importonce
 
+#define HURRY_UP  // comment out for production release
+
 .const PART2_start = $4d00
 
 .const hires_memory = $2000

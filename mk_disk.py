@@ -1,7 +1,12 @@
 #!/usr/bin/python3
+
+
+# This gets obsolete by build-floppy.asm
+
+
 import os
 
-DISK_IMAGE = "meeetro.d64"
+DISK_IMAGE = "meetro.d64"
 
 files = [
     {

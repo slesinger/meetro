@@ -3,12 +3,22 @@
 #import "fm_lookups.asm"
 #import "fm_const.asm"
 
+    .var font = LoadBinary("tools/assets/search-font.bin", BF_C64FILE)
+    *=$2000 "Part4_font_results"
+    .fill font.getSize(), font.get(i)
+
 #if RUNNING_ALL
     // Started as whole compilation of parts
 #else
     // when compiled and started as a single part
     BasicUpstart2(PART2_ns.PART2_start)
 #endif
+
+// copy 3 characters in a row, 3 rows, from search_hires
+.const search_y = 12
+.const search_x = 8
+.const search_topleft = $2000 + search_y*40*8 + search_x*8
+.const straight_line_len = 19
 
 *= $4d00 "Part2_code"
 PART2_start:
@@ -33,8 +43,7 @@ upd_count: .byte 0
 
 
 
-exec_update:
-    nop  // will change to rts when programm is finished
+exec_update_bigchar:
     copy_bmp_3x4()
     clc
     lda #$04
@@ -45,18 +54,163 @@ exec_update:
 !:
     inc upd_count
     bne exec_update_end
-    lda #$60
-    sta exec_update
-    jsr show_search
+    lda #<exec_show_search
+    sta stage_jsr + 1
+    lda #>exec_show_search
+    sta stage_jsr + 2
 exec_update_end:
     rts
 
+exec_show_search:
+    dec exec_show_search_counter
+    bne exec_show_search_end
+    jsr show_search
+    // lda #<exec_type_search
+    // sta stage_jsr + 1
+    // lda #>exec_type_search
+    // sta stage_jsr + 2
+    lda #<exec_scroll_results_setup
+    sta stage_jsr + 1
+    lda #>exec_scroll_results_setup
+    sta stage_jsr + 2
+exec_show_search_end:
+    rts
+exec_show_search_counter: .byte 20  // How long to wait before showing search
 
-// copy 3 characters in a row, 3 rows, from search_hires
-.const search_y = 12
-.const search_x = 8
-.const search_topleft = $2000 + search_y*40*8 + search_x*8
-.const straight_line_len = 19
+exec_type_search:
+.const font_rom = $1000
+    jsr $ff9f  // scan key
+    lda $00c5
+    cmp #$40
+    beq exec_type_search_end
+    cmp exec_type_search_last_key
+    beq exec_type_search_end
+    sta exec_type_search_last_key
+    ldx search_text_pointer
+    inc search_text_pointer
+    lda search_text, x
+    beq exec_type_search_next_stage
+    jsr copy_basic_char
+exec_type_search_end:
+    rts
+exec_type_search_next_stage:
+    lda #<exec_scroll_results_setup
+    sta stage_jsr + 1
+    lda #>exec_scroll_results_setup
+    sta stage_jsr + 2
+    rts
+exec_type_search_last_key: .byte 41
+
+search_text_pointer:
+    .byte 0
+search_text:
+    .encoding "screencode_upper"
+    .text "LATEST NEWS"; .byte 0
+
+// take screen code in register A and copy it to hires sceen. Use ROM character set
+copy_basic_char:
+    // calculate source, offset in the character memory char_offset = char*8
+    asl  // x8 because there are 8 bytes per lookup address
+    asl
+    asl
+    tax
+    ldy #$00
+!:
+    lda font_rom+0, x  // lo nibble of font offset
+copy_basic_char_trg:
+    sta search_topleft + 42*8
+    inc copy_basic_char_trg + 1
+    inx
+    iny
+    cpy #$08
+    bne !-
+    rts
+
+// switch to empty text screen
+// one by one, like loading from web, display search bar, then Hondani text logo, then search articles one by one until whole screen is filled
+exec_scroll_results_setup:
+.const search_header_offfset = $0428
+
+    clear_color_memory(LIGHT_BLUE, YELLOW)
+
+    lda #$18  // font $8000, screen $8800
+    sta $d018
+
+    lda $d011  
+    and #$df    // Bit 5 disable gfx mode
+    sta $d011
+    // copy logo and left part of search
+    ldx #$00
+esr1:
+    lda #$d0
+    sta search_header_offfset, x
+esr2:
+    lda #$e0
+    sta search_header_offfset + 40, x
+esr3:
+    lda #$f0
+    sta search_header_offfset + 80, x
+    inc esr1 + 1
+    inc esr2 + 1
+    inc esr3 + 1
+    inx
+    cpx #$0a
+    bne esr1
+    // copy middle empty part of search
+!:
+    lda #$da
+    sta search_header_offfset, x
+    lda #$fa
+    sta search_header_offfset + 80, x
+    inx
+    cpx #$1c
+    bne !-
+    // copy right part of search
+esr4:
+    lda #$db
+    sta search_header_offfset, x
+esr5:
+    lda #$eb
+    sta search_header_offfset + 40, x
+esr6:
+    lda #$fb
+    sta search_header_offfset + 80, x
+    inc esr4 + 1
+    inc esr5 + 1
+    inc esr6 + 1
+    inx
+    cpx #$21
+    bne esr4
+
+    lda #<exec_scroll_results_scroll
+    sta stage_jsr + 1
+    lda #>exec_scroll_results_scroll
+    sta stage_jsr + 2
+    rts
+
+exec_scroll_results_scroll:
+    // dec $d020
+    // fine vertical scroll
+// up _new_line:
+// up_new_line_src:
+//     lda #$28
+// !:  lda $a000,x
+//     sta $07c0,x
+//     dex
+//     bpl !-
+//     inc up_new_line_src + 2
+//     rts
+
+
+// up_copy_screen:
+// . for (var i=0;i<40*24;i++) {
+//     lda $0400+40 + i
+//     sta $0400 + i
+// }
+// rts
+    // hardscroll
+    rts
+
 screen_pos:
 .word search_topleft +0*40*8, search_topleft + 1*40*8, search_topleft + 2*40*8
 .word search_topleft +0*40*8 +straight_line_len*8, search_topleft + 1*40*8 +straight_line_len*8, search_topleft + 2*40*8 +straight_line_len*8
@@ -259,9 +413,6 @@ color_x:
     sta $dc0d
     lda #$81
     sta $d01a
-    lda #$1b
-    ora #$20  // bit 5 (hires)
-    sta $d011
     lda #$80
     sta $d012
     cli
@@ -269,19 +420,18 @@ color_x:
 
 irq1:
     asl $d019
-    // inc $d020
     jsr music.play 
-    // dec $d020
-    // dec $d020
     inc update_counter
     lda update_counter
-    cmp #$04  // speed of putting new chars on screen
-    bne !+
-    jsr exec_update  // later overriden to next phase of the program
+    cmp #$01  // 04 speed of putting new chars on screen
+    bne end_irq
+stage_jsr:
+    jsr exec_update_bigchar  // later overriden to next phase of the program
+    // jsr exec_show_search
+    // jsr exec_scroll_results_setup
     lda #$00
     sta update_counter
-!:
-    // inc $d020
+end_irq:
     pla
     tay
     pla
@@ -289,6 +439,8 @@ irq1:
     pla
     rti
 update_counter: .byte 0
+
+
 
 .macro set_background_color(color) {
     lda #color
@@ -309,10 +461,19 @@ update_counter: .byte 0
 
 .macro hires_on() {
     lda $d018  
-    ora #$08    // Bit 3, screen memeory at $2000
+    ora #$08    // Bit 3, screen memory at $2000
     sta $d018
     lda $d011  
     ora #$20    // Bit 5
+    sta $d011
+}
+
+.macro hires_off_1c00() {
+    lda $d018  
+    ora #$74    // Bit 3, screen memory at $2000
+    sta $d018
+    lda $d011  
+    and #$df    // Bit 5
     sta $d011
 }
 

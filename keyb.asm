@@ -1,6 +1,16 @@
 // This is PART 1
 
 #import "fm_const.asm"
+#import "loadersymbols-c64.inc"
+.const loadraw_temp = $0b00  // temp load address 0b00-0d30
+
+*= install "loader_install" // same as install jsr
+.var installer_c64 = LoadBinary("install-c64.prg", BF_C64FILE)
+installer_ptr: .fill installer_c64.getSize(), installer_c64.get(i)
+
+*= loadraw_temp "loader_resident" // this will be moved to 9000 (loadraw)
+.var loader_c64 = LoadBinary("loader-c64.prg", BF_C64FILE)
+loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
 
 .namespace PART1_ns {
 
@@ -8,7 +18,6 @@ BasicUpstart2(start)
 
 *= $0810 "Part1_code"
 start:
-              jmp PART2_begin
     // print t_error1
     lda #<t_error1
     sta TMP_PTR
@@ -24,13 +33,47 @@ start:
     cpx #95  // length of t_error1
     bne !-       // (65C02 would normally use BRA, but BNE will work here.)
 
-    // lda #$01
-    // sta $cf
+    // turn off basic
+    lda $01
+    and #$fe
+    sta $01
+
+    init_irq()
+
+    // Call fast loader installation routine:
+    jsr install
+
+    // Copy resident loader from 0a00 to $9000
+    ldx #$00
+!:
+    lda loadraw_temp,x
+    sta loadraw,x
+    lda loadraw_temp + $0100,x
+    sta loadraw + $0100,x
+    lda loadraw_temp + $0200,x
+    sta loadraw + $0200,x
+    inx
+    bne !-
 
 init:
-    init_irq()
+
+    // load next part
+    clc
+    ldx #<file_b  // Vector pointing to a string containing loaded file name
+    ldy #>file_b
+    jsr loadraw
+    cmp #$00
+    beq load_ok
+    sta $0400  // load error
+    sta $d020
     jmp *
 
+    // load until keyb finishes
+load_ok:
+    jmp *
+
+file_b:   .text "SMALL" //"FONTM"  //filename on diskette
+          .byte $00
 
 
 .macro init_irq() {
@@ -79,8 +122,10 @@ irq0:
 
     // read keyboard
 keyb_input:
-    jsr $ffe4        // Calling KERNAL GETIN
-          jmp prnt_char             // disable this for production
+    jsr $f142        // Calling KERNAL GETIN ($ffe4) for keyboard only
+#if HURRY_UP
+    jmp prnt_char
+#endif
     beq irq0_end
 prnt_char:
     // print character on screen
@@ -101,7 +146,7 @@ t_conv1_ptr:
 !:
     cmp #$03  // end of conversation?
     bne !+
-    jmp PART2_start
+    jmp $c100 //PART2_start
 !:
     cmp #$0d // new line? make sure cursor is off
     bne !+
@@ -110,7 +155,8 @@ t_conv1_ptr:
     sta ($d1), y     // ta pozice je nejaka divna, takze to zatim neresim
     lda #$0d    
 !:
-    jsr $ffd2        // Calling KERNAL CHROUT
+    jsr $e716        // Calling KERNAL CHROUT ($ffd2) but for screen output
+
     // increase text pointer
 just_increase:
     inc t_conv1_ptr+1
@@ -119,6 +165,12 @@ just_increase:
 !:
 irq0_end:
     jmp $ea31
+    // pla
+    // tay
+    // pla
+    // tax
+    // pla
+    // rti
 
 
 cursor_tick: .byte 0  // increase every frame, bit 4 tells if cursor should be displayed
@@ -146,32 +198,5 @@ t_conv1:
     .text "READY."; .byte $0d, $01
     // human input
     .text "RUN"; .byte $03  // indicate end of conversation
-    
-
-
-
-
-
-
-
-
-#import "lib_fast_load.asm"  // at $9000
-
-*=$0b00 "test_code_for_loading"
-PART2_begin:
-    // disable basic $a000-$bfff
-    lda $01
-    and #%11111110
-    sta $01
-
-    // ** Example of using the fast loader
-    fastloader_init()  // call this only once to upload code to the floppy
-    fastloader_load($28, 2, 8)  // load from track 2, 8 sectors in total and store to memory $2800
-!:
-    inc $d020
-    jmp !-
-
-
-
 
 }

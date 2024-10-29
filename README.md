@@ -41,7 +41,7 @@ transition to the next part will be with blank screen and music playing
 
 ### Compile library binaries
 
-In tools/KrillsLoader/loader/src, enter ```make prg INSTALL=2800 RESIDENT=9000 ZP=90```
+In tools/krill194/loader/src, enter ```make prg INSTALL=0e00 RESIDENT=9000 ZP=90```
 
 
 ## video

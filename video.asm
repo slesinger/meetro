@@ -376,25 +376,26 @@ tf1:sta $ff70,y
 
 .file [name="video.prg", segments="VIDEO"]
 
-.disk [filename="video.d64", name="HONDANI", id="2025!"]
-{
-    [name="START", type="prg", segments="VIDEO" ],
-    // [name="START", type="prg", prgFiles="krillsteststart.prg" ],
-    [name="F5", type="prg", prgFiles="data/F5.bin" ],
-    [name="BA", type="prg", prgFiles="data/BA.bin" ],
-    [name="BB", type="prg", prgFiles="data/BB.bin" ],
-    [name="BC", type="prg", prgFiles="data/BC.bin" ],
-    [name="BD", type="prg", prgFiles="data/BD.bin" ],
-    [name="BE", type="prg", prgFiles="data/BE.bin" ],
-    [name="BF", type="prg", prgFiles="data/BF.bin" ],
-    [name="BG", type="prg", prgFiles="data/BG.bin" ],
-    [name="BH", type="prg", prgFiles="data/BH.bin" ],
-    [name="BI", type="prg", prgFiles="data/BI.bin" ],
-    [name="BJ", type="prg", prgFiles="data/BJ.bin" ],
-    [name="BK", type="prg", prgFiles="data/BK.bin" ],
-    [name="BL", type="prg", prgFiles="data/BL.bin" ],
-    [name="BM", type="prg", prgFiles="data/BM.bin" ],
-    [name="BN", type="prg", prgFiles="data/BN.bin" ],
-}
+// See build-floppy.asm that replaces the below.
+// .disk [filename="video.d64", name="HONDANI", id="2025!"]
+// {
+//     [name="START", type="prg", segments="VIDEO" ],
+//     // [name="START", type="prg", prgFiles="krillsteststart.prg" ],
+//     [name="F5", type="prg", prgFiles="data/F5.bin" ],
+//     [name="BA", type="prg", prgFiles="data/BA.bin" ],
+//     [name="BB", type="prg", prgFiles="data/BB.bin" ],
+//     [name="BC", type="prg", prgFiles="data/BC.bin" ],
+//     [name="BD", type="prg", prgFiles="data/BD.bin" ],
+//     [name="BE", type="prg", prgFiles="data/BE.bin" ],
+//     [name="BF", type="prg", prgFiles="data/BF.bin" ],
+//     [name="BG", type="prg", prgFiles="data/BG.bin" ],
+//     [name="BH", type="prg", prgFiles="data/BH.bin" ],
+//     [name="BI", type="prg", prgFiles="data/BI.bin" ],
+//     [name="BJ", type="prg", prgFiles="data/BJ.bin" ],
+//     [name="BK", type="prg", prgFiles="data/BK.bin" ],
+//     [name="BL", type="prg", prgFiles="data/BL.bin" ],
+//     [name="BM", type="prg", prgFiles="data/BM.bin" ],
+//     [name="BN", type="prg", prgFiles="data/BN.bin" ],
+// }
 
 }  // end namespace PART4_ns
