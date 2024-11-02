@@ -25,28 +25,27 @@ start:
     sta TMP_PTR+1
     ldx #$00
     // print initial error message
-!:
-    lda t_error1,x
-    beq init
+!:  lda t_error1,x
+    beq http_error_printed
     jsr $ffd2    // If the routine fools with Y, be sure to save and restore it.
     inx
     cpx #95  // length of t_error1
-    bne !-       // (65C02 would normally use BRA, but BNE will work here.)
+    bne !-
+http_error_printed:
 
     // turn off basic
-    lda $01
-    and #$fe
+    lda #$36
     sta $01
-
-    init_irq()
 
     // Call fast loader installation routine:
     jsr install
+    bcs load_error
 
-    // Copy resident loader from 0a00 to $9000
+    init_irq()
+
+    // Copy resident loader from 0b00 to $9000
     ldx #$00
-!:
-    lda loadraw_temp,x
+!:  lda loadraw_temp,x
     sta loadraw,x
     lda loadraw_temp + $0100,x
     sta loadraw + $0100,x
@@ -55,24 +54,33 @@ start:
     inx
     bne !-
 
-init:
-
     // load next part
     clc
-    ldx #<file_b  // Vector pointing to a string containing loaded file name
-    ldy #>file_b
+    ldx #<file_music  // Vector pointing to a string containing loaded file name
+    ldy #>file_music
     jsr loadraw
-    cmp #$00
-    beq load_ok
-    sta $0400  // load error
-    sta $d020
-    jmp *
+    bcs load_error
+
+    clc
+    ldx #<file_fontm  // Vector pointing to a string containing loaded file name
+    ldy #>file_fontm
+    jsr loadraw
+    bcs load_error
 
     // load until keyb finishes
-load_ok:
+load_finished:
     jmp *
 
-file_b:   .text "SMALL" //"FONTM"  //filename on diskette
+load_error:
+    sta $0400  // display error screen code
+    lda #$04
+    sta $d020
+    sta $d021
+    jmp *
+
+file_music:   .text "MUSIC"  //filename on diskette
+          .byte $00
+file_fontm:   .text "FONTM"  //filename on diskette
           .byte $00
 
 
@@ -146,7 +154,7 @@ t_conv1_ptr:
 !:
     cmp #$03  // end of conversation?
     bne !+
-    jmp $c100 //PART2_start
+    jmp PART2_start
 !:
     cmp #$0d // new line? make sure cursor is off
     bne !+
@@ -165,12 +173,6 @@ just_increase:
 !:
 irq0_end:
     jmp $ea31
-    // pla
-    // tay
-    // pla
-    // tax
-    // pla
-    // rti
 
 
 cursor_tick: .byte 0  // increase every frame, bit 4 tells if cursor should be displayed

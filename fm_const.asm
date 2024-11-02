@@ -1,6 +1,7 @@
 #importonce
 
-#define HURRY_UP  // comment out for production release
+// #define HURRY_UP  // comment out for production release
+#define RUNNING_COMPLETE  // comment out when you want to run parts as single file
 
 .const PART2_start = $4d00
 

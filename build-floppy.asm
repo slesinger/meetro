@@ -7,13 +7,16 @@
 // start quick 
 //    /usr/bin/x64sc -8 meetro.d64 keyb.prg
 
-.disk [filename="meetro.d64", name="HONDANI MEETRO", id="2025!"]
+.disk [filename="meetro.d64", name="HONDANI MEETRO", id="2025!", interleave=10]
 {
-    // [name="START", type="prg", prgFiles="autostart.prg" ],
-    [name="KEYB", type="prg", prgFiles="keyb.prg" ],
+    // [name="START", type="prf142g", prgFiles="autostart.prg" ],
+    [name="KEYBD", type="prg", prgFiles="keyb.prg" ],
     [name="FONTM", type="prg", prgFiles="font_matrix.prg" ],
+    [name="MUSIC", type="prg", prgFiles="data/ucieczka.music" ],
     [name="VIDEO", type="prg", prgFiles="video.prg" ],
-    [name="SMALL", type="prg", prgFiles="small_test.prg" ],  //$c100
+    [name="RESFT", type="prg", prgFiles="data/search-font.bin" ],
+    [name="RESTX", type="prg", prgFiles="data/results-text.bin" ],
+    // [name="SMALL", type="prg", prgFiles="small_test.prg" ],  //$c100
     [name="F5", type="prg", prgFiles="data/F5.bin" ],
     [name="BA", type="prg", prgFiles="data/BA.bin" ],
     [name="BB", type="prg", prgFiles="data/BB.bin" ],

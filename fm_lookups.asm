@@ -1,10 +1,29 @@
 #importonce
 #import "fm_const.asm"
+#import "loadersymbols-c64.inc"
 
+#if RUNNING_COMPLETE
+#else 
+    *= install "loader_install" // same as install jsr
+    .var installer_c64 = LoadBinary("install-c64.prg", BF_C64FILE)
+    installer_ptr: .fill installer_c64.getSize(), installer_c64.get(i)
 
-.var music = LoadSid("data/Ucieczka_z_Tropiku.sid")  //Test_Drive_2.sid
-*=music.location "Part2_music"
-.fill music.size, music.getData(i)
+    *= loadraw "loader_resident" // this will be moved to 9000 (loadraw)
+    .var loader_c64 = LoadBinary("loader-c64.prg", BF_C64FILE)
+    loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
+
+    // .var music = LoadSid("Ucieczka_z_Tropiku.sid")  // music is loaded in previous part. Separately is disabled
+    // *=music.location "Part2_music"
+    // .fill music.size, music.getData(i)
+
+    // .var font = LoadBinary("data/search-font.bin", BF_C64FILE)  // is loaded during this part
+    // *=$2000 "Part4_font_results"
+    // .fill font.getSize(), font.get(i)
+
+    // .var results_text = LoadBinary("data/results-text.bin")  // is loaded during this part
+    // *=$5a00 "Part4_font_restexts"
+    // .fill results_text.getSize(), results_text.get(i)
+#endif 
 
 
 
@@ -17,7 +36,7 @@ search_hires: .fill search_data.getSize(), search_data.get(i)
 
 
 
-*=$0a00 "Part2_lookups"
+*=$5300 "Part2_lookups"
 font3x4_lookup:
 // create byte lookup table for 3x4 font offset. Each char is 4*4*8=128 bytes big
 .for (var i=0;i<NUM_CHARS;i++) {
@@ -368,10 +387,10 @@ updates:
 .eval update_timeline.set(question_marks_only + 52, UpdateItem(UR, 7, 2, screen_color(WHITE, LIGHT_RED)))
 .eval update_timeline.set(question_marks_only + 56, UpdateItem(UA, 8, 2, screen_color(WHITE, LIGHT_RED)))
 //dan.
-.eval update_timeline.set(question_marks_only + 72, UpdateItem(UD, 6, 2, screen_color(WHITE, LIGHT_BLUE)))
-.eval update_timeline.set(question_marks_only + 76, UpdateItem(UA, 7, 2, screen_color(WHITE, LIGHT_BLUE)))
-.eval update_timeline.set(question_marks_only + 80, UpdateItem(UN, 8, 2, screen_color(WHITE, LIGHT_BLUE)))
-.eval update_timeline.set(question_marks_only + 82, UpdateItem(UDOT, 9, 2, screen_color(WHITE, LIGHT_BLUE)))
+.eval update_timeline.set(question_marks_only + 72, UpdateItem(UD, 6, 2, screen_color(WHITE, GREEN)))
+.eval update_timeline.set(question_marks_only + 76, UpdateItem(UA, 7, 2, screen_color(WHITE, GREEN)))
+.eval update_timeline.set(question_marks_only + 80, UpdateItem(UN, 8, 2, screen_color(WHITE, GREEN)))
+.eval update_timeline.set(question_marks_only + 82, UpdateItem(UDOT, 9, 2, screen_color(WHITE, GREEN)))
 
 // H i
 .eval update_timeline.set(question_marks_only + 100, UpdateItem(UI, 9, 2, screen_color(WHITE, LIGHT_BLUE)))

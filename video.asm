@@ -13,11 +13,11 @@
 .const BACKGROUND_COLOR = $0b
 .const fryba_scroll_pointer_zp = $02  // and $fc
 
-#if RUNNING_ALL
+#if RUNNING_COMPLETE
     // Started as whole compilation of parts
 #else
     // This has to happen only when starting separately
-    .var music = LoadSid("data/Ucieczka_z_Tropiku.sid")
+    .var music = LoadSid("Ucieczka_z_Tropiku.sid")
     *=music.location "Part2_music"  // $1000
     .fill music.size, music.getData(i)
 

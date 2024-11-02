@@ -141,7 +141,7 @@ Load video code at 9200
 //   $4000-$4bff Part2_font
 //   $4c00-$4dc7 Part2_code
 
-#define RUNNING_ALL
+#define RUNNING_COMPLETE
 #import "fm_const.asm"
 
 #import "keyb.asm"

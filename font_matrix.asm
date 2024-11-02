@@ -2,12 +2,9 @@
 
 #import "fm_lookups.asm"
 #import "fm_const.asm"
+#import "loadersymbols-c64.inc"
 
-    .var font = LoadBinary("tools/assets/search-font.bin", BF_C64FILE)
-    *=$2000 "Part4_font_results"
-    .fill font.getSize(), font.get(i)
-
-#if RUNNING_ALL
+#if RUNNING_COMPLETE
     // Started as whole compilation of parts
 #else
     // when compiled and started as a single part
@@ -22,15 +19,24 @@
 
 *= $4d00 "Part2_code"
 PART2_start:
+    #if RUNNING_COMPLETE
+    #else 
+        jsr install
+        bcc !+
+        jmp load_error
+        !:
+    #endif
+    
     // set background colors
     set_background_color(WHITE)
     set_border_color(WHITE)
     start_music()
 
     hires_on()
-    clear_screen()
-    clear_color_memory(LIGHT_GRAY, WHITE)  // becomes background color for individual characters
-
+    #if RUNNING_COMPLETE
+        clear_screen()
+        clear_color_0400memory(LIGHT_GRAY, WHITE)  // becomes background color for individual characters
+    #endif
     // init update script
     ldx #$00
     lda #<updates
@@ -38,8 +44,41 @@ PART2_start:
     lda #>updates
     sta TMP_PTR + 1
     init_irq()
-    jmp *
+lload_loop:
+    lda what_to_load
+    beq lload_loop
+    cmp #$01
+    bne !+
+    clc
+    ldx #<file_font  // Vector pointing to a string containing loaded file name
+    ldy #>file_font
+    jsr loadraw
+    bcs load_error
+    lda #$02
+    sta what_to_load
+    jmp lload_loop
+!:  cmp #$02
+    bne lload_loop
+    clc
+    ldx #<file_texts  // Vector pointing to a string containing loaded file name
+    ldy #>file_texts
+    jsr loadraw
+    bcs load_error
+    lda #$00
+    sta what_to_load
+    jmp lload_loop
 upd_count: .byte 0
+what_to_load: .byte 0  // 0:wait, 1:RESFT, 2:RESTX
+file_font:   .text "RESFT"  //filename on diskette
+          .byte $00
+file_texts:   .text "RESTX"  //filename on diskette
+          .byte $00
+load_error:
+    sta $0400  // display error screen code
+    lda #$04
+    sta $d020
+    sta $d021
+    jmp *
 
 
 
@@ -65,13 +104,9 @@ exec_show_search:
     dec exec_show_search_counter
     bne exec_show_search_end
     jsr show_search
-    // lda #<exec_type_search
-    // sta stage_jsr + 1
-    // lda #>exec_type_search
-    // sta stage_jsr + 2
-    lda #<exec_scroll_results_setup
+    lda #<exec_type_search
     sta stage_jsr + 1
-    lda #>exec_scroll_results_setup
+    lda #>exec_type_search
     sta stage_jsr + 2
 exec_show_search_end:
     rts
@@ -126,20 +161,36 @@ copy_basic_char_trg:
     bne !-
     rts
 
+
 // switch to empty text screen
 // one by one, like loading from web, display search bar, then Hondani text logo, then search articles one by one until whole screen is filled
 exec_scroll_results_setup:
-.const search_header_offfset = $0428
+    wait_frames_rts()
+esr_jmp_stages:
+    jmp esr_stage1  // will be overriden by set_next_esr_stage
 
-    clear_color_memory(LIGHT_BLUE, YELLOW)
+esr_stage1:   //clear screen
 
-    lda #$18  // font $8000, screen $8800
+    clear_color_0400memory(RED, BLACK)  // fill screen memory by $20 (spaces)
+    clear_color_d800memory(GRAY, BLACK)
+    set_hondani_small_logo_colors()
+    lda #$18  // font $2000, screen $0400
     sta $d018
-
-    lda $d011  
-    and #$df    // Bit 5 disable gfx mode
+    lda #$1b  // enable text mode
     sta $d011
+    lda #$01  // load font RESFT
+    sta what_to_load
+    set_next_esr_stage(esr_stage2)
+    set_wait_frames(0)   // wait 0 before displaynig logo
+    rts
+
+esr_stage2:  // copy logo and search
+    lda what_to_load
+    beq !+
+    rts
+!:
     // copy logo and left part of search
+    .const search_header_offfset = $0400
     ldx #$00
 esr1:
     lda #$d0
@@ -181,7 +232,64 @@ esr6:
     inx
     cpx #$21
     bne esr4
+    set_next_esr_stage(esr_stage3)
+    set_wait_frames(20/4)  // wait before displaying All News Videos Tools tabs
+    rts
 
+esr_stage3:  // copy tabs
+    // copy first screen of results
+    .const esr_text_source = $5a00
+    ldx #$50
+!:  lda esr_text_source, x
+    sta $0478, x
+    dex
+    bne !-
+    set_next_esr_stage(esr_stage4)
+    set_wait_frames(60/4)  // wait befire top story
+    rts
+
+
+esr_stage4:  // copy top story
+    ldx #$c8
+!:  lda esr_text_source + $50, x
+    sta $0478 + $50, x
+    dex
+    bne !-
+    set_next_esr_stage(esr_stage5)
+    set_wait_frames(40/4)  // wait before article 1
+    rts
+
+
+esr_stage5:  // copy article 1
+    ldx #$0
+!:  lda esr_text_source + $50 + $c8, x
+    sta $0478 + $50 + $c8, x
+    dex
+    bne !-
+    ldx #$38
+!:  lda esr_text_source + $50 + $c8 + $100, x
+    sta $0478 + $50 + $c8 + $100, x
+    dex
+    bne !-
+    set_next_esr_stage(esr_stage6)
+    set_wait_frames(80/4)  // wait before article 2
+    rts
+
+
+esr_stage6:  // copy article 2 and Hoooondani
+    ldx #$f0
+!:  lda esr_text_source + 16*40, x
+    sta $0478 + 16*40, x
+    dex
+    bne !-
+    set_next_esr_stage(esr_stage7)
+    set_wait_frames(100/4)
+    rts
+
+
+esr_stage7:  // wait and switch irq jsr to next stage
+    set_wait_frames(0)
+    // switch to next phase
     lda #<exec_scroll_results_scroll
     sta stage_jsr + 1
     lda #>exec_scroll_results_scroll
@@ -199,7 +307,7 @@ exec_scroll_results_scroll:
 //     dex
 //     bpl !-
 //     inc up_new_line_src + 2
-//     rts
+    rts
 
 
 // up_copy_screen:
@@ -420,17 +528,23 @@ color_x:
 
 irq1:
     asl $d019
-    jsr music.play 
+    #if RUNNING_COMPLETE
+        jsr $1003 // jsr music.play 
+    #endif
     inc update_counter
     lda update_counter
-    cmp #$01  // 04 speed of putting new chars on screen
+    #if HURRY_UP
+        cmp #$01
+    #else 
+        cmp #$04  // 04 speed of putting new chars on screen
+    #endif
     bne end_irq
+    lda #$00
+    sta update_counter
 stage_jsr:
     jsr exec_update_bigchar  // later overriden to next phase of the program
     // jsr exec_show_search
     // jsr exec_scroll_results_setup
-    lda #$00
-    sta update_counter
 end_irq:
     pla
     tay
@@ -455,8 +569,10 @@ update_counter: .byte 0
 .macro start_music() {
     ldx #0
     ldy #0
-    lda #music.startSong-1
-    jsr music.init
+    lda #0  // lda #music.startSong-1
+    #if RUNNING_COMPLETE
+        jsr $1000  // jsr music.init
+    #endif
 }
 
 .macro hires_on() {
@@ -492,7 +608,34 @@ update_counter: .byte 0
     bne !-    
 }
 
-.macro clear_color_memory(fg_color, bg_color) {
+.macro set_hondani_small_logo_colors() {
+    // Customize Hondani logo colors
+    .const shslc = $d800
+    lda #$0e  // Ho
+    sta shslc + 0
+    sta shslc + 1
+    sta shslc + 2
+    sta shslc + 40
+    sta shslc + 41
+    sta shslc + 42
+    lda #$0a  // n
+    sta shslc + 3
+    sta shslc + 43
+    lda #$05  // dan
+    sta shslc + 4
+    sta shslc + 5
+    sta shslc + 6
+    sta shslc + 7
+    sta shslc + 44
+    sta shslc + 45
+    sta shslc + 46
+    sta shslc + 47
+    lda #$04  // i
+    sta shslc + 8
+    sta shslc + 48
+}
+
+.macro clear_color_0400memory(fg_color, bg_color) {
     // fill $0400-$800 with color
     lda #fg_color
     asl
@@ -509,6 +652,48 @@ update_counter: .byte 0
     sta $0700,x
     dex
     bne !-
+}
+
+.macro clear_color_d800memory(char_color, bg_color) {
+    // fill $0400-$800 with color
+    lda #bg_color
+    asl
+    asl
+    asl
+    asl
+    clc
+    adc #char_color
+    ldx #$00
+!:
+    sta $d800,x
+    sta $d900,x
+    sta $da00,x
+    sta $db00,x
+    dex
+    bne !-
+}
+
+.macro set_next_esr_stage(next_stage_addr) {
+    lda #<next_stage_addr
+    sta esr_jmp_stages + 1
+    lda #>next_stage_addr
+    sta esr_jmp_stages + 2
+}
+
+set_wait_frames_counter: .byte 1
+// set wait frames counter to number of frames
+// settint 0 wait time is valid and will continue immediately
+.macro set_wait_frames(frames) {
+    lda #frames+1
+    sta set_wait_frames_counter
+}
+.macro wait_frames_rts() {
+    dec set_wait_frames_counter
+    lda set_wait_frames_counter
+    cmp #$00
+    beq !+
+    rts
+!:
 }
 
 }  // end of namespace PART2_ns
