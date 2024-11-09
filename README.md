@@ -1,5 +1,18 @@
 # Hondani Meetro
 
+## Issues
+- pregenerovat nahodne velka pismena, schazi tam pravy sloupec
+- font search baru
+- text, ktery se vyhledava
+- schazi scroller part
+- zapakovat prg, vejde se nam to na disketu?
+- zprovoznit autoload
+- napojit video
+- vylepsit google font - pixel-detail
+
+- loader by mel umet switchovat banky
+- fryba by mohl mit font optimalizovany pro sebe. Mozna to nebude velky rozdil.
+
 ## Disk layout
 There will be following files visible on the disk
 - `fastload.prg` - the first program that will be loaded and autostarted

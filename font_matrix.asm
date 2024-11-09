@@ -26,7 +26,7 @@ PART2_start:
         jmp load_error
         !:
     #endif
-    
+
     // set background colors
     set_background_color(WHITE)
     set_border_color(WHITE)
@@ -170,7 +170,6 @@ esr_jmp_stages:
     jmp esr_stage1  // will be overriden by set_next_esr_stage
 
 esr_stage1:   //clear screen
-
     clear_color_0400memory(RED, BLACK)  // fill screen memory by $20 (spaces)
     clear_color_d800memory(GRAY, BLACK)
     set_hondani_small_logo_colors()
@@ -181,14 +180,10 @@ esr_stage1:   //clear screen
     lda #$01  // load font RESFT
     sta what_to_load
     set_next_esr_stage(esr_stage2)
-    set_wait_frames(0)   // wait 0 before displaynig logo
+    set_wait_frames(16)   // wait 0 before displaynig logo
     rts
 
 esr_stage2:  // copy logo and search
-    lda what_to_load
-    beq !+
-    rts
-!:
     // copy logo and left part of search
     .const search_header_offfset = $0400
     ldx #$00
@@ -237,6 +232,11 @@ esr6:
     rts
 
 esr_stage3:  // copy tabs
+    lda what_to_load
+    beq !+
+    set_wait_frames(0)   // wait 0 before displaynig logo
+    rts
+!:
     // copy first screen of results
     .const esr_text_source = $5a00
     ldx #$50
@@ -267,8 +267,8 @@ esr_stage5:  // copy article 1
     dex
     bne !-
     ldx #$38
-!:  lda esr_text_source + $50 + $c8 + $100, x
-    sta $0478 + $50 + $c8 + $100, x
+!:  lda esr_text_source + $50 + $c8 + $100-1, x
+    sta $0478 + $50 + $c8 + $100-1, x
     dex
     bne !-
     set_next_esr_stage(esr_stage6)
@@ -558,12 +558,12 @@ update_counter: .byte 0
 
 .macro set_background_color(color) {
     lda #color
-    sta $d020
+    sta $d021
 }
 
 .macro set_border_color(color) {
     lda #color
-    sta $d021
+    sta $d020
 }
 
 .macro start_music() {

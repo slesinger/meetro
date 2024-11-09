@@ -10,13 +10,14 @@
 .disk [filename="meetro.d64", name="HONDANI MEETRO", id="2025!", interleave=10]
 {
     // [name="START", type="prf142g", prgFiles="autostart.prg" ],
+
     [name="KEYBD", type="prg", prgFiles="keyb.prg" ],
-    [name="FONTM", type="prg", prgFiles="font_matrix.prg" ],
+    // [name="FONTM", type="prg", prgFiles="font_matrix.prg" ],
     [name="MUSIC", type="prg", prgFiles="data/ucieczka.music" ],
     [name="VIDEO", type="prg", prgFiles="video.prg" ],
-    [name="RESFT", type="prg", prgFiles="data/search-font.bin" ],
-    [name="RESTX", type="prg", prgFiles="data/results-text.bin" ],
-    // [name="SMALL", type="prg", prgFiles="small_test.prg" ],  //$c100
+    [name="VIDFT", type="prg", prgFiles="data/video_font.bin" ],
+    // [name="RESFT", type="prg", prgFiles="data/search-font.bin" ],
+    // [name="RESTX", type="prg", prgFiles="data/results-text.bin" ],
     [name="F5", type="prg", prgFiles="data/F5.bin" ],
     [name="BA", type="prg", prgFiles="data/BA.bin" ],
     [name="BB", type="prg", prgFiles="data/BB.bin" ],
@@ -27,9 +28,9 @@
     [name="BG", type="prg", prgFiles="data/BG.bin" ],
     [name="BH", type="prg", prgFiles="data/BH.bin" ],
     [name="BI", type="prg", prgFiles="data/BI.bin" ],
-    // [name="BJ", type="prg", prgFiles="data/BJ.bin" ],   // disabled because disk is full
-    // [name="BK", type="prg", prgFiles="data/BK.bin" ],
-    // [name="BL", type="prg", prgFiles="data/BL.bin" ],
-    // [name="BM", type="prg", prgFiles="data/BM.bin" ],
-    // [name="BN", type="prg", prgFiles="data/BN.bin" ],
+    [name="BJ", type="prg", prgFiles="data/BJ.bin" ],   // disabled because disk is full
+    [name="BK", type="prg", prgFiles="data/BK.bin" ],
+    [name="BL", type="prg", prgFiles="data/BL.bin" ],
+    [name="BM", type="prg", prgFiles="data/BM.bin" ],
+    [name="BN", type="prg", prgFiles="data/BN.bin" ],
 }

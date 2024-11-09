@@ -3,6 +3,7 @@
 // then start $1c00
 
 .segment VIDEO []
+#import "fm_const.asm"
 #import "loadersymbols-c64.inc"
 
 .namespace PART4_ns {
@@ -17,18 +18,18 @@
     // Started as whole compilation of parts
 #else
     // This has to happen only when starting separately
-    .var music = LoadSid("Ucieczka_z_Tropiku.sid")
-    *=music.location "Part2_music"  // $1000
-    .fill music.size, music.getData(i)
+    // .var music = LoadSid("Ucieczka_z_Tropiku.sid")
+    // *=music.location "Part2_music"  // $1000
+    // .fill music.size, music.getData(i)
 
-    .var font = LoadBinary("data/video_font.bin")
-    *=$2000 "Part4_font1"
-    .fill font.getSize(), font.get(i)
+    // .var font = LoadBinary("data/video_font.bin", BF_C64FILE)
+    // *=$2000 "Part4_font1"
+    // .fill font.getSize(), font.get(i)
 
-    // Include Fryba
-    .var fryba5 = LoadBinary("data/F5.bin", BF_C64FILE)
-    *=$6400 "Part4_Fryba5.bin"
-    .fill fryba5.getSize(), fryba5.get(i)
+    // // Include Fryba
+    // .var fryba5 = LoadBinary("data/F5.bin", BF_C64FILE)
+    // *=$6400 "Part4_Fryba5.bin"
+    // .fill fryba5.getSize(), fryba5.get(i)
 
     *= install "loader_install" // same as install jsr
     .var installer_c64 = LoadBinary("tools/krill194/loader/build/install-c64.prg", BF_C64FILE)
@@ -37,14 +38,54 @@
     *= loadraw "loader_resident" // same as loader code block address
     .var loader_c64 = LoadBinary("tools/krill194/loader/build/loader-c64.prg", BF_C64FILE)
     loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
-
-
+    
+    BasicUpstart2(PART4_ns.start)
 #endif
 
 
-*= $1c00 "Part4_code"
+*= $9300 "Part4_code"
 start:
-// THIS HAPPENS ONLY WHEN STARTING SEPARATELY
+    #if RUNNING_COMPLETE
+    #else // runing separate
+        jsr install
+        bcs load_error
+    #endif
+    clc
+    ldx #<file_font  // Vector pointing to a string containing loaded file name
+    ldy #>file_font
+    jsr loadraw
+    bcs load_error
+    clc
+    ldx #<file_f5  // Vector pointing to a string containing loaded file name
+    ldy #>file_f5
+    jsr loadraw
+    bcs load_error
+    #if RUNNING_COMPLETE
+    #else // runing separate
+        clc
+        ldx #<file_music  // Vector pointing to a string containing loaded file name
+        ldy #>file_music
+        jsr loadraw
+        bcs load_error
+    #endif
+    jmp start2
+
+
+file_music: .text "MUSIC"  //filename on diskette
+          .byte $00
+file_font:   .text "VIDFT"  //filename on diskette
+          .byte $00
+file_f5:   .text "F5"  //filename on diskette
+          .byte $00
+load_error:
+    sta $0400  // display error screen code
+    lda #$04
+    sta $d020
+    sta $d021
+    jmp *
+
+
+start2:
     // turn off basic
     lda $01
     and #$fe
@@ -72,25 +113,21 @@ start:
     lda #BACKGROUND_COLOR
     sta $d021
 
-    // set bank $4000
-    lda $dd00
-    and #$fc
-    ora #$02
+    // set bank, do not use masking, only values can be $00, $01, $02 and $03
+    lda #$02
     sta $dd00
-
-    // Call loader installation routine:
-    jsr install
 
     // start music
     ldx #0
     ldy #0
-    lda #music.startSong-1
-    jsr music.init
+    lda #0
+    jsr $1000
+    
 
 
 
 // THIS HAS TO HAPPEN EVERY TIME
-    distribute_font()
+    // distribute_font()
     // set zero page indirect pointer to scroll_text
     lda #<scroll_text
     sta fryba_scroll_pointer_zp
@@ -109,10 +146,9 @@ load_loop:
     clc
     ldx #<file_b  // Vector pointing to a string containing loaded file name
     ldy #>file_b
-    // inc $d020
-    jsr loadraw
-    // dec $d020
-    inc file_b + 1  // increment file name  B0 > B1
+    jsr loadraw  //! pres toto se nedostane
+    bcs load_error2
+    inc file_b + 1  // increment file name  BA > BB > BC ...
 
     // Check if filename is set to BN, it does not exist, that means end
     lda file_b + 1
@@ -132,6 +168,13 @@ wait_for_last_block_to_playback:
 end_of_video:
     inc $d020
     jmp end_of_video
+
+load_error2:
+    sta $0400  // display error screen code
+    lda #$04
+    sta $d020
+    sta $d021
+    jmp *
 
 loading_sempahore:  // 0: load next part of video, non-zero: wait
     .byte 0  //initially load, first part is pre-loaded but load the next one immediately
@@ -220,8 +263,7 @@ irq1:
     bne !+
     inc fryba_scroll_pointer_zp + 1  // increase hi nybble
 !:
-
-    jsr music.play 
+    jsr $1003
 
     // Count down to next frame
       // decrease frame_index by 1, check if it is zero. 
@@ -326,7 +368,7 @@ skip_screen_update:
     rti
 
 irq2:
-    jsr music.play 
+    jsr $1003
     jmp skip_screen_update
 
 hardscroll:
@@ -344,7 +386,7 @@ tf1:sta $ff70,y
     bne sf1
     rts
 
-.macro distribute_font() {
+.macro distribute_font() { // not needed anymore
     ldx #0
 !:
     lda $2000,x
