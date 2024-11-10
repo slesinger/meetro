@@ -13,6 +13,16 @@
 - loader by mel umet switchovat banky
 - fryba by mohl mit font optimalizovany pro sebe. Mozna to nebude velky rozdil.
 
+## Build process
+
+### Build disk image
+/usr/bin/java -jar /home/honza/projects/c64/pc-tools/kickass/KickAss.jar build-floppy.asm
+
+
+
+-autostartprgmode 1 -autostart ${kickassembler:buildFilename} -moncommands ${kickassembler:viceSymbolsFilename}
+
+
 ## Disk layout
 There will be following files visible on the disk
 - `fastload.prg` - the first program that will be loaded and autostarted
@@ -20,6 +30,8 @@ There will be following files visible on the disk
 Remaining data will be stored as sectors and will not be visible from BAM
 
 ## How the memory is loaded over time
+
+See `memory.ods`
 
 ### Autostart loads
 Will bootstrap first code

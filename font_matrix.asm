@@ -58,10 +58,20 @@ lload_loop:
     sta what_to_load
     jmp lload_loop
 !:  cmp #$02
-    bne lload_loop
+    bne !+
     clc
     ldx #<file_texts  // Vector pointing to a string containing loaded file name
     ldy #>file_texts
+    jsr loadraw
+    bcs load_error
+    lda #$00
+    sta what_to_load
+    jmp lload_loop
+!:  cmp #$03
+    bne lload_loop
+    clc
+    ldx #<file_video_code  // Vector pointing to a string containing loaded file name
+    ldy #>file_video_code
     jsr loadraw
     bcs load_error
     lda #$00
@@ -72,6 +82,8 @@ what_to_load: .byte 0  // 0:wait, 1:RESFT, 2:RESTX
 file_font:   .text "RESFT"  //filename on diskette
           .byte $00
 file_texts:   .text "RESTX"  //filename on diskette
+          .byte $00
+file_video_code:   .text "VIDEO"  //filename on diskette
           .byte $00
 load_error:
     sta $0400  // display error screen code
@@ -257,6 +269,8 @@ esr_stage4:  // copy top story
     bne !-
     set_next_esr_stage(esr_stage5)
     set_wait_frames(40/4)  // wait before article 1
+    lda #$03  // load font VIDEO
+    sta what_to_load
     rts
 
 
@@ -296,7 +310,9 @@ esr_stage7:  // wait and switch irq jsr to next stage
     sta stage_jsr + 2
     rts
 
+//verticaler
 exec_scroll_results_scroll:
+jmp $9300 // video.prg
     // dec $d020
     // fine vertical scroll
 // up _new_line:

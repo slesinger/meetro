@@ -117,13 +117,14 @@ start2:
     lda #$02
     sta $dd00
 
-    // start music
-    ldx #0
-    ldy #0
-    lda #0
-    jsr $1000
-    
-
+    #if RUNNING_COMPLETE
+    #else // runing separate
+        // start music
+        ldx #0
+        ldy #0
+        lda #0
+        jsr $1000
+    #endif 
 
 
 // THIS HAS TO HAPPEN EVERY TIME

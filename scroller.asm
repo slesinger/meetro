@@ -1,4 +1,4 @@
-//used assembler 64tass v1.45
+//used assembler Kickassembler
 
 //this is the example code of 3d dot scroll on the c64
 //no irq, without msx, no doubble buffering this is only sample

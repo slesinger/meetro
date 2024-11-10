@@ -5,3 +5,8 @@
 *.vs
 *.din
 chunk.tmp
+tools/assets/frames.pkl
+tools/assets/fryb*
+tools/assets/video*
+tools/krill194/**
+video/*

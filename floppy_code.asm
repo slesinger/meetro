@@ -1,4 +1,4 @@
-// This code has to be copiled before all other parts that do use this fastloader.
+// This code has to be compiled before all other parts that do use this fastloader.
 // This code is not imported anywhere because it is included in other asm files as binary, 
 // split by 32 bytes chunks. Chunks are the uploaded to floppy.
 
