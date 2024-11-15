@@ -138,7 +138,7 @@ exec_show_search_end:
 exec_show_search_counter: .byte 20  // How long to wait before showing search
 
 exec_type_search:
-.const font_rom = $1000
+.const font_rom = $d000
     jsr $ff9f  // scan key
     lda $00c5
     cmp #$40
@@ -174,8 +174,18 @@ copy_basic_char:
     asl
     asl
     tax
-    ldy #$00
+    bcc !+  // overflow not set
+    lda #$d1   // compiler sucks(>font_rom+1) // for chars $20-$3f, overlfow set
+    sta cvc_loop + 2
+    jmp !++
+!:  lda #(>font_rom+0) // for chars $00-$1f, overflow not set
+    sta cvc_loop + 2
 !:
+    lda $01
+    and #%11111011
+    sta $01
+    ldy #$00
+cvc_loop:
     lda font_rom+0, x  // lo nibble of font offset
 copy_basic_char_trg:
     sta search_topleft + 42*8
@@ -183,7 +193,10 @@ copy_basic_char_trg:
     inx
     iny
     cpy #$08
-    bne !-
+    bne cvc_loop
+    lda $01
+    ora #%00000100
+    sta $01
     rts
 
 
