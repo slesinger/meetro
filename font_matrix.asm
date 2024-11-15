@@ -124,11 +124,16 @@ exec_update_bigchar:
     sta stage_jsr + 2
 exec_update_end:
     rts
+music_paused: .byte 0
 
 exec_show_search:
     dec exec_show_search_counter
     bne exec_show_search_end
     jsr show_search
+    // pause music
+    lda #$01
+    sta music_paused
+    // set next vector for typing search text
     lda #<exec_type_search
     sta stage_jsr + 1
     lda #>exec_type_search
@@ -164,6 +169,10 @@ exec_type_search:
 exec_type_search_end:
     rts
 exec_type_search_next_stage:
+    // pause music
+    lda #$00
+    sta music_paused
+    // set next vector for showing results
     lda #<exec_scroll_results_setup
     sta stage_jsr + 1
     lda #>exec_scroll_results_setup
@@ -602,7 +611,18 @@ color_x:
 
 irq1:
     asl $d019
+    lda music_paused
+    bne iskip_music  // skip music if paused
+    lda $d418
+    ora #$0f
+    sta $d418  // set volume to 16
     jsr $1003 // jsr music.play 
+    jmp !+
+iskip_music:
+    lda $d418
+    and #$f0
+    sta $d418  // set volume to 0
+!:
     inc update_counter
     lda update_counter
     #if HURRY_UP
