@@ -136,16 +136,26 @@ exec_show_search:
 exec_show_search_end:
     rts
 exec_show_search_counter: .byte 20  // How long to wait before showing search
-
+key_repeat_countdown: .byte 0
 exec_type_search:
 .const font_rom = $d000
-    jsr $ff9f  // scan key
-    lda $00c5
-    cmp #$40
-    beq exec_type_search_end
-    cmp exec_type_search_last_key
-    beq exec_type_search_end
-    sta exec_type_search_last_key
+    // read key
+    lda #$00
+    sta $dc00
+    ldx $dc01
+    cpx #$ff
+    bne !+
+    // key not pressed
+    lda #$00  // unblock
+    sta key_repeat_countdown
+    jmp exec_type_search_end
+!:  // key pressed
+    lda key_repeat_countdown  // was it pressed before?
+    cmp #$00   // 0: ready to read next key
+    bne exec_type_search_end  // it was pressed before, do nothing
+    lda #$01  // block reading next key without releasing first
+    sta key_repeat_countdown
+    // render char
     ldx search_text_pointer
     inc search_text_pointer
     lda search_text, x
@@ -165,7 +175,7 @@ search_text_pointer:
     .byte 0
 search_text:
     .encoding "screencode_upper"
-    .text "LATEST NEWS"; .byte 0
+    .text SEARCH_TEXT; .byte 0
 
 // take screen code in register A and copy it to hires sceen. Use ROM character set
 copy_basic_char:

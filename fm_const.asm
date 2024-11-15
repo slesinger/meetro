@@ -18,4 +18,5 @@
 
 .enum { USPACE, UA, UB, UC, UD, UE, UF, UG, UH, UI, UJ, UK, UL, UM, UN, UO, UP, UQ, UR, US, UT, UU, UV, UW, UX, UY, UZ, UHH, U2, UDOT, UQUESTION, UPLUS }
 
+.const SEARCH_TEXT = "LATEST NEWS"
 .var end_of_main
