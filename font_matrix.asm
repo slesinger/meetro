@@ -251,8 +251,7 @@ esr3:
     cpx #$0a
     bne esr1
     // copy middle empty part of search
-!:
-    lda #$da
+!:  lda #$da
     sta search_header_offfset, x
     lda #$fa
     sta search_header_offfset + 80, x
@@ -275,6 +274,14 @@ esr6:
     inx
     cpx #$21
     bne esr4
+    // copy searched text
+    ldx #$00
+!:  lda search_text, x
+    beq esr7
+    sta search_header_offfset + 50, x
+    inx
+    jmp !-
+esr7:
     set_next_esr_stage(esr_stage3)
     set_wait_frames(20/4)  // wait before displaying All News Videos Tools tabs
     rts
