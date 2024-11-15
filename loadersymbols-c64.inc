@@ -8,8 +8,8 @@
 .const config_DIRTRACK                 = 18
 .const config_DIRTRACK81               = 40
 .const config_END_ADDRESS_API          = 0
-.const config_FILENAME_MAXLENGTH       = 16
-.const config_FILE_EXISTS_API          = 0
+.const config_FILENAME_MAXLENGTH       = 2
+.const config_FILE_EXISTS_API          = 1
 .const config_INTERNAL                 = 0
 .const config_LOAD_COMPD_API           = 1
 .const config_LOAD_RAW_API             = 1
@@ -31,15 +31,16 @@
 .const status_DEVICE_NOT_PRESENT       = $fe
 .const status_FILE_NOT_FOUND           = $ff
 
-// zeropage $90-$a1
-.const loader_zp_first                 = $e8
-.const loadaddrlo                      = $e8
-.const loadaddrhi                      = $e9
-.const loader_zp_last                  = $ec
+// zeropage $e8-$f9
+.const loader_zp_first                 = $57
+.const loadaddrlo                      = $57
+.const loadaddrhi                      = $58
+.const loader_zp_last                  = $67
 
-// install $0e00-$2853
+// install $0e00-$2953
 .const install                         = $0e00
 
-// resident $9000-$922f
+// resident $9000-$9265
 .const loadraw                         = $9000
 .const loadcompd                       = $900e
+.const fileexists                      = $90fe

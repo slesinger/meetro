@@ -5,43 +5,55 @@
 .const loadraw_temp = $0b00  // temp load address 0b00-0d30
 
 *= install "loader_install" // same as install jsr
-.var installer_c64 = LoadBinary("install-c64.prg", BF_C64FILE)
+.var installer_c64 = LoadBinary("install-c64.prgx", BF_C64FILE)  // prgx suffix prevents from cleanin
 installer_ptr: .fill installer_c64.getSize(), installer_c64.get(i)
 
 *= loadraw_temp "loader_resident" // this will be moved to 9000 (loadraw)
-.var loader_c64 = LoadBinary("loader-c64.prg", BF_C64FILE)
+.var loader_c64 = LoadBinary("loader-c64.prgx", BF_C64FILE)
 loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
 
 .namespace PART1_ns {
+    .const cursor_ptr = $ac
+    .const NL = $ff
+    .const SWITCH_TO_USER = $fe
+    .const SWITCH_TO_AI = $fd
+    .const END = $fc
 
 BasicUpstart2(start)
 
 *= $0810 "Part1_code"
 start:
-    // print t_error1
-    lda #<t_error1
-    sta TMP_PTR
-    lda #>t_error1
-    sta TMP_PTR+1
-    ldx #$00
-    // print initial error message
-!:  lda t_error1,x
-    beq http_error_printed
-    jsr $ffd2    // If the routine fools with Y, be sure to save and restore it.
-    inx
-    cpx #95  // length of t_error1
-    bne !-
-http_error_printed:
+    // save cursor position
+    lda $d3
+    sta cursor_x
+    lda $d6
+    sta cursor_y
 
-    // turn off basic
-    lda #$36
-    sta $01
-
+    // lda #$00
+    // sta cursor_ptr
+    // lda #$04
+    // sta cursor_ptr + 1
     // Call fast loader installation routine:
     jsr install
     bcs load_error
 
-    init_irq()
+    // print initial error message  t_error1
+    ldx #$00
+!:  
+    txa
+    pha
+    lda t_error1,x
+    beq http_error_printed
+    jsr my_chrout
+    pla
+    tax
+    inx
+    cpx #95  // length of t_error1
+    bne !-
+http_error_printed:
+    // turn off basic
+    lda #$36
+    sta $01
 
     // Copy resident loader from 0b00 to $9000
     ldx #$00
@@ -53,6 +65,8 @@ http_error_printed:
     sta loadraw + $0200,x
     inx
     bne !-
+
+    init_irq()
 
     // load next part
     clc
@@ -108,21 +122,21 @@ irq0:
     inc cursor_tick
     // blink cursor on screen
     lda #$10
-    ldy $d3
+    ldy #$01
     bit cursor_tick
     beq !+
-    lda ($d1), y
-    and #$7f
+    lda (cursor_ptr), y
+    and #$7f  // turn off cursor
     jmp !++
 !:
-    lda ($d1), y
-    ora #$80
+    lda (cursor_ptr), y
+    ora #$80  // turn on cursor
 !:
-    sta ($d1), y
+    sta (cursor_ptr), y
 
-    // AI or kyeboard input?
+    // AI or keyboard input?
     lda ai_mode
-    cmp #$01
+    cmp #SWITCH_TO_USER
     beq keyb_input
     // ai_input
        // wait random time
@@ -130,40 +144,40 @@ irq0:
 
     // read keyboard
 keyb_input:
-    jsr $f142        // Calling KERNAL GETIN ($ffe4) for keyboard only
-#if HURRY_UP
-    jmp prnt_char
-#endif
-    beq irq0_end
+    lda #$00
+    sta $dc00
+    ldx $dc01
+    cpx #$ff
+    bne !+
+        // unpressed
+    lda #$00  // unblock
+    sta key_repeat_countdown
+    jmp irq0_end
+!:  // something was pressed
+    lda key_repeat_countdown  // was it pressed before?
+    cmp #$00   // 0: ready to read next key
+    bne irq0_end  // it was pressed before, do nothing
+    lda #$01  // block reading next key without releasing first
+    sta key_repeat_countdown
 prnt_char:
     // print character on screen
 t_conv1_ptr:
     lda t_conv1
-    cmp #$01  // switch to keyboard mode?
-    bne !+
-    sta ai_mode
-    // clear keyboard buffer
-    lda #$00
-    sta $c6
-    jmp just_increase
-!:
-    cmp #$02  // switch to AI mode?
+    cmp #SWITCH_TO_USER  // switch to keyboard mode?
     bne !+
     sta ai_mode
     jmp just_increase
 !:
-    cmp #$03  // end of conversation?
+    cmp #SWITCH_TO_AI  // switch to AI mode?
+    bne !+
+    sta ai_mode
+    jmp just_increase
+!:
+    cmp #END  // end of conversation?
     bne !+
     jmp PART2_start
 !:
-    cmp #$0d // new line? make sure cursor is off
-    bne !+
-    lda ($d1), y
-    and #$7f                                           // MA BYT 7f
-    sta ($d1), y     // ta pozice je nejaka divna, takze to zatim neresim
-    lda #$0d    
-!:
-    jsr $e716        // Calling KERNAL CHROUT ($ffd2) but for screen output
+    jsr my_chrout
 
     // increase text pointer
 just_increase:
@@ -172,33 +186,128 @@ just_increase:
     inc t_conv1_ptr+2
 !:
 irq0_end:
-    jmp $ea31
+    pla
+    tay
+    pla
+    tax
+    pla
+    rti
+    // jmp $ea31
 
+key_repeat_countdown: .byte 0  // only read key of this is 0
 
+// Prints a character on screen
+// Modifies x,y
+my_chrout:
+    pha
+    // disable cursor first
+    ldy #$01
+    lda (cursor_ptr), y
+    and #$7f  // turn off cursor
+    sta (cursor_ptr), y
+    pla
+    pha
+    // print character
+    cmp #$ff  // new line?
+    bne my_regular_chrout
+    ldx #$00
+    stx cursor_x
+    inc cursor_y
+    ldy cursor_y
+    lda screen_column0_hi, y
+    sta cursor_ptr+1
+    lda screen_column0_lo, y
+    clc
+    adc cursor_x
+    sta cursor_ptr
+    bcc !+
+    inc cursor_ptr+1
+!:
+    pla
+    rts
+my_regular_chrout:
+    ldy cursor_y
+    lda screen_column0_hi, y
+    sta cursor_ptr+1
+    lda screen_column0_lo, y
+    clc
+    adc cursor_x
+    sta cursor_ptr
+    bcc !+
+    inc cursor_ptr+1
+!:
+    pla
+    ldy #$00
+    sta (cursor_ptr), y  // write to screen; Note: dummy address that gets always calculated
+    inc cursor_x
+    lda cursor_x
+    cmp #$28
+    bne !+
+    lda #$00
+    sta cursor_x
+    inc cursor_y
+    lda cursor_y
+    cmp #$19
+    bne !+
+    dec cursor_y
+    scroll_up()
+!:  
+    rts
+
+cursor_x: .byte 0
+cursor_y: .byte 0
+screen_column0_hi: .byte $04, $04, $04, $04, $04, $04, $04, $05, $05, $05, $05, $05, $05, $06, $06, $06, $06, $06, $06, $06, $07, $07, $07, $07, $07
+screen_column0_lo: .byte $00, $28, $50, $78, $A0, $C8, $F0, $18, $40, $68, $90, $B8, $E0, $08, $30, $58, $80, $A8, $D0, $F8, $20, $48, $70, $98, $C0
 cursor_tick: .byte 0  // increase every frame, bit 4 tells if cursor should be displayed
-ai_mode: .byte 1  // 1 - keyboard input, 2 - AI input
+ai_mode: .byte SWITCH_TO_USER  // 1 - keyboard input, 2 - AI input
 
 t_error1:
-    .text "TRACEBACK (MOST RECENT CALL LAST):"; .byte $0d
-    .text @"  FILE \"MAIN.PY\" LINE 55"; .byte $0d
-    .text "HTTP EXCEPTION: HOST NOT FOUND"; .byte $0d
+    .encoding "screencode_upper"
+    .text "TRACEBACK (MOST RECENT CALL LAST):"; .byte NL
+    .text @"  FILE \"MAIN.PY\" LINE 55"; .byte NL
+    .text "HTTP EXCEPTION: HOST NOT FOUND"; .byte NL
     .text ">>> "
 t_conv1:
     // human input
-    .text "LOAD AI"; .byte $0d, $02
-    .text "> "; .byte $01  // machine input
+    .text "LOAD AI"; .byte NL, SWITCH_TO_AI
+    .text "> "; .byte SWITCH_TO_USER  // machine input
     // human input
-    .text "CREATE A COOL DEMO"; .byte $0d, $02
+    .text "CREATE A COOL DEMO"; .byte NL, SWITCH_TO_AI
     // AI input
-    .text "AI: SURE. WHAT THEME DO YOU WANT?"; .byte $0d
-    .text "> "; .byte $01
+    .text "AI: SURE. WHAT THEME DO YOU WANT?"; .byte NL
+    .text "> "; .byte SWITCH_TO_USER
     // human input
-    .text "MEETING MY SCENE FRIENDS"; .byte $0d, $02
+    .text "MEETING MY SCENE FRIENDS"; .byte NL, SWITCH_TO_AI
     // AI input
-    .text "AI: A MEETRO? OK. SEARCHING SCENE DB..."; .byte $0d
-    .text "AI: CODE IS READY. $1000-$47FF"; .byte $0d
-    .text "READY."; .byte $0d, $01
+    .text "AI: A MEETRO? OK. SEARCHING SCENE DB..."; .byte NL
+    .text "AI: CODE IS READY. $1000-$47FF"; .byte NL
+    .text "READY."; .byte NL, SWITCH_TO_USER
     // human input
-    .text "RUN"; .byte $03  // indicate end of conversation
+    .text "RUN"; .byte END  // indicate end of conversation
+
+
+// scroll screen at $0400 by line up
+.macro scroll_up() {
+    // iterate over Y from 1 to 24
+
+
+
+    // clear line 24
+    
+
+
+    // E9C8	29 03	AND #%00000011	mask 0000 00xx, line memory page
+// E9CA	0D 88 02	ORA $0288	OR with screen memory page
+// E9CD	85 AD	STA $AD	save next/previous line pointer high byte
+// E9CF	20 E0 E9	JSR $E9E0	calculate pointers to screen lines colour RAM
+// E9D2	A0 27	LDY #$27	set the column count
+// E9D4	B1 AC	LDA ($AC),Y	get character from next/previous screen line
+// E9D6	91 D1	STA ($D1),Y	save character to current screen line
+// E9D8	B1 AE	LDA ($AE),Y	get colour from next/previous screen line colour RAM
+// E9DA	91 F3	STA ($F3),Y	save colour to current screen line colour RAM
+// E9DC	88	DEY	decrement column index/count
+// E9DD	10 F5	BPL $E9D4	loop if more to do
+// E9DF	60	RTS	
+}
 
 }

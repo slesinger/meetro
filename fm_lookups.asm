@@ -5,11 +5,11 @@
 #if RUNNING_COMPLETE
 #else 
     *= install "loader_install" // same as install jsr
-    .var installer_c64 = LoadBinary("install-c64.prg", BF_C64FILE)
+    .var installer_c64 = LoadBinary("install-c64.prgx", BF_C64FILE)
     installer_ptr: .fill installer_c64.getSize(), installer_c64.get(i)
 
     *= loadraw "loader_resident" // this will be moved to 9000 (loadraw)
-    .var loader_c64 = LoadBinary("loader-c64.prg", BF_C64FILE)
+    .var loader_c64 = LoadBinary("loader-c64.prgx", BF_C64FILE)
     loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
 
     // .var music = LoadSid("Ucieczka_z_Tropiku.sid")  // music is loaded in previous part. Separately is disabled

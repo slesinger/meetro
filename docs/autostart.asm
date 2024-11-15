@@ -6,7 +6,7 @@
 // Then install fastloader to floppy and copy resident fastloader to 9000
 
 .const TARGET = $0801  // where to load the data to memory
-.const TRACK = 1  // 18 what track to load from
+.const TRACK = 18  // 18 what track to load from
   // for sectors, see sector_table at the end
 
 .const DATA_OUT = $20 // bit 5

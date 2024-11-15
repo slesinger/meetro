@@ -25,6 +25,19 @@ PART2_start:
         bcc !+
         jmp load_error
         !:
+        clc
+        ldx #<file_music  // Vector pointing to a string containing loaded file name
+        ldy #>file_music
+        jsr loadraw
+        bcc !+
+        jmp load_error
+        !:
+        jmp end_of_not_running_complete
+        file_music:   .text "MUSIC"  //filename on diskette
+                .byte $00
+        file_fontm:   .text "FONTM"  //filename on diskette
+                .byte $00
+        end_of_not_running_complete:
     #endif
 
     // set background colors
@@ -78,8 +91,8 @@ lload_loop:
     sta what_to_load
     jmp lload_loop
 upd_count: .byte 0
-what_to_load: .byte 0  // 0:wait, 1:RESFT, 2:RESTX
-file_font:   .text "RESFT"  //filename on diskette
+what_to_load: .byte 0  // 0:wait, 1:RFONT, 2:RESTX
+file_font:   .text "RFONT"  //filename on diskette
           .byte $00
 file_texts:   .text "RESTX"  //filename on diskette
           .byte $00
@@ -189,7 +202,7 @@ esr_stage1:   //clear screen
     sta $d018
     lda #$1b  // enable text mode
     sta $d011
-    lda #$01  // load font RESFT
+    lda #$01  // load font RFONT
     sta what_to_load
     set_next_esr_stage(esr_stage2)
     set_wait_frames(16)   // wait 0 before displaynig logo
@@ -315,6 +328,21 @@ exec_scroll_results_scroll:
 jmp $9300 // video.prg
     // dec $d020
     // fine vertical scroll
+
+
+// E9C8	29 03	AND #%00000011	mask 0000 00xx, line memory page
+// E9CA	0D 88 02	ORA $0288	OR with screen memory page
+// E9CD	85 AD	STA $AD	save next/previous line pointer high byte
+// E9CF	20 E0 E9	JSR $E9E0	calculate pointers to screen lines colour RAM
+// E9D2	A0 27	LDY #$27	set the column count
+// E9D4	B1 AC	LDA ($AC),Y	get character from next/previous screen line
+// E9D6	91 D1	STA ($D1),Y	save character to current screen line
+// E9D8	B1 AE	LDA ($AE),Y	get colour from next/previous screen line colour RAM
+// E9DA	91 F3	STA ($F3),Y	save colour to current screen line colour RAM
+// E9DC	88	DEY	decrement column index/count
+// E9DD	10 F5	BPL $E9D4	loop if more to do
+// E9DF	60	RTS	
+
 // up _new_line:
 // up_new_line_src:
 //     lda #$28
@@ -544,9 +572,7 @@ color_x:
 
 irq1:
     asl $d019
-    #if RUNNING_COMPLETE
-        jsr $1003 // jsr music.play 
-    #endif
+    jsr $1003 // jsr music.play 
     inc update_counter
     lda update_counter
     #if HURRY_UP
@@ -586,9 +612,7 @@ update_counter: .byte 0
     ldx #0
     ldy #0
     lda #0  // lda #music.startSong-1
-    #if RUNNING_COMPLETE
-        jsr $1000  // jsr music.init
-    #endif
+    jsr $1000  // jsr music.init
 }
 
 .macro hires_on() {

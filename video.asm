@@ -73,7 +73,7 @@ start:
 
 file_music: .text "MUSIC"  //filename on diskette
           .byte $00
-file_font:   .text "VIDFT"  //filename on diskette
+file_font:   .text "VFONT"  //filename on diskette
           .byte $00
 file_f5:   .text "F5"  //filename on diskette
           .byte $00
