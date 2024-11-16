@@ -27,13 +27,9 @@ start:
     lda $d3
     sta cursor_x
     lda $d6
-    lda #23
     sta cursor_y
+    jsr mc_calc_cursor_ptr
 
-    // lda #$00
-    // sta cursor_ptr
-    // lda #$04
-    // sta cursor_ptr + 1
     // Call fast loader installation routine:
     jsr install
     bcs load_error
@@ -123,7 +119,7 @@ irq0:
     inc cursor_tick
     // blink cursor on screen
     lda #$10
-    ldy #$01
+    ldy #$00
     bit cursor_tick
     beq !+
     lda (cursor_ptr), y
@@ -202,61 +198,51 @@ key_repeat_countdown: .byte 0  // only read key of this is 0
 my_chrout:
     pha
     // disable cursor first
-    ldy #$01
+    ldy #$00
     lda (cursor_ptr), y
     and #$7f  // turn off cursor
     sta (cursor_ptr), y
     pla
     pha
     // print character
-    cmp #$ff  // new line?
+    cmp #NL  // new line?
     bne my_regular_chrout
-    ldx #$00
+    ldx #$00  // new line
     stx cursor_x
     inc cursor_y
-    lda cursor_y
-    cmp #$19
-    bne !+
-    jsr scroll_up
-!:  
-    ldy cursor_y
-    lda screen_column0_hi, y
-    sta cursor_ptr+1
-    lda screen_column0_lo, y
-    clc
-    adc cursor_x
-    sta cursor_ptr
-    bcc !+
-    inc cursor_ptr+1
-!:
     pla
-    rts
+    jmp mc_cursor_moved
 my_regular_chrout:
-    ldy cursor_y
-    lda screen_column0_hi, y
-    sta cursor_ptr+1
-    lda screen_column0_lo, y
-    clc
-    adc cursor_x
-    sta cursor_ptr
-    bcc !+
-    inc cursor_ptr+1
-!:
+    // print character
     pla
     ldy #$00
     sta (cursor_ptr), y  // write to screen; Note: dummy address that gets always calculated
+    // move cursor
     inc cursor_x
     lda cursor_x
     cmp #$28
-    bne !+
+    bne mc_calc_cursor_ptr
     lda #$00
     sta cursor_x
     inc cursor_y
+    // scroll screen up if Y is off screen
+mc_cursor_moved:
     lda cursor_y
     cmp #$19
-    bne !+
+    bne mc_calc_cursor_ptr
     jsr scroll_up
-!:  
+mc_calc_cursor_ptr:
+    // calculate screen address of cursor
+    ldy cursor_y
+    lda screen_column0_hi, y
+    sta cursor_ptr+1
+    lda screen_column0_lo, y
+    clc
+    adc cursor_x
+    sta cursor_ptr
+    bcc !+
+    inc cursor_ptr+1
+!:
     rts
 
 cursor_x: .byte 0
@@ -270,22 +256,23 @@ t_error1:
     .encoding "screencode_upper"
     .text "TRACEBACK (MOST RECENT CALL LAST):"; .byte NL
     .text @"  FILE \"MAIN.PY\" LINE 55"; .byte NL
-    // .text "HTTP EXCEPTION: HOST NOT FOUND"; .byte NL
+    .text "HTTP EXCEPTION: HOST NOT FOUND"; .byte NL
     .text ">>> "
 t_conv1:
     // human input
-    .text "LOAD AI"; .byte NL, SWITCH_TO_AI
+    .text "LOAD AI"; .byte SWITCH_TO_AI, NL
+    .text "AI: READY."; .byte NL
     .text "> "; .byte SWITCH_TO_USER  // machine input
     // human input
-    .text "CREATE A COOL DEMO"; .byte NL, SWITCH_TO_AI
+    .text "CREATE A COOL DEMO"; .byte SWITCH_TO_AI, NL
     // AI input
     .text "AI: SURE. WHAT THEME DO YOU WANT?"; .byte NL
     .text "> "; .byte SWITCH_TO_USER
     // human input
-    .text "MEETING MY SCENE FRIENDS"; .byte NL, SWITCH_TO_AI
+    .text "MEETING MY SCENE FRIENDS"; .byte SWITCH_TO_AI, NL
     // AI input
     .text "AI: A MEETRO? OK. SEARCHING SCENE DB..."; .byte NL
-    .text "AI: CODE IS READY. $1000-$47FF"; .byte NL
+    .text "AI: CODE GENERATED AT $1000-$47FF"; .byte NL
     .text "READY."; .byte NL, SWITCH_TO_USER
     // human input
     .text "RUN"; .byte END  // indicate end of conversation
