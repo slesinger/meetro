@@ -25,6 +25,8 @@ PART2_start:
         bcc !+
         jmp load_error
         !:
+        lda #$36
+        sta $01
         clc
         ldx #<file_music  // Vector pointing to a string containing loaded file name
         ldy #>file_music
@@ -77,6 +79,11 @@ lload_loop:
     ldy #>file_texts
     jsr loadraw
     bcs load_error
+    clc
+    ldx #<file_verts  // Vector pointing to a string containing loaded file name
+    ldy #>file_verts
+    jsr loadraw
+    bcs load_error
     lda #$00
     sta what_to_load
     jmp lload_loop
@@ -90,13 +97,27 @@ lload_loop:
     lda #$00
     sta what_to_load
     jmp lload_loop
+!:  cmp #$04
+    bne lload_loop
+    clc
+    ldx #<file_fryba  // Vector pointing to a string containing loaded file name
+    ldy #>file_fryba
+    jsr loadraw
+    bcs load_error
+    lda #$00
+    sta what_to_load
+    jmp lload_loop
 upd_count: .byte 0
 what_to_load: .byte 0  // 0:wait, 1:RFONT, 2:RESTX
 file_font:   .text "RFONT"  //filename on diskette
           .byte $00
 file_texts:   .text "RESTX"  //filename on diskette
           .byte $00
+file_verts:   .text "VERTX"  //filename on diskette
+          .byte $00
 file_video_code:   .text "VIDEO"  //filename on diskette
+          .byte $00
+file_fryba:   .text "F5"  //filename on diskette
           .byte $00
 load_error:
     sta $0400  // display error screen code
@@ -351,7 +372,7 @@ esr_stage6:  // copy article 2 and Hoooondani
     set_next_esr_stage(esr_stage7)
     set_wait_frames(100/4)
     rts
-
+ 
 
 esr_stage7:  // wait and switch irq jsr to next stage
     set_wait_frames(0)
@@ -360,47 +381,73 @@ esr_stage7:  // wait and switch irq jsr to next stage
     sta stage_jsr + 1
     lda #>exec_scroll_results_scroll
     sta stage_jsr + 2
+    unet_hondani_small_logo_colors()
+    lda #$04
+    sta what_to_load
     rts
 
 //verticaler
 exec_scroll_results_scroll:
-jmp $9300 // video.prg
-    // dec $d020
-    // fine vertical scroll
-
-
-// E9C8	29 03	AND #%00000011	mask 0000 00xx, line memory page
-// E9CA	0D 88 02	ORA $0288	OR with screen memory page
-// E9CD	85 AD	STA $AD	save next/previous line pointer high byte
-// E9CF	20 E0 E9	JSR $E9E0	calculate pointers to screen lines colour RAM
-// E9D2	A0 27	LDY #$27	set the column count
-// E9D4	B1 AC	LDA ($AC),Y	get character from next/previous screen line
-// E9D6	91 D1	STA ($D1),Y	save character to current screen line
-// E9D8	B1 AE	LDA ($AE),Y	get colour from next/previous screen line colour RAM
-// E9DA	91 F3	STA ($F3),Y	save colour to current screen line colour RAM
-// E9DC	88	DEY	decrement column index/count
-// E9DD	10 F5	BPL $E9D4	loop if more to do
-// E9DF	60	RTS	
-
-// up _new_line:
-// up_new_line_src:
-//     lda #$28
-// !:  lda $a000,x
-//     sta $07c0,x
-//     dex
-//     bpl !-
-//     inc up_new_line_src + 2
+    // key pressed to pause the scroll?
+    lda #$00
+    sta $dc00
+    ldx $dc01
+    cpx #$ff
+    bne !+
+    // fine vertical scroll ??
+    // hard vertical scroll
+    jsr scroll_up
+    lda esr7_hard_scroll_counter
+    cmp #$d0  // $ff minus after how many lines the scroll will speed up
+    bne esr7a
+    lda #$02
+    sta speed_control + 1  // there is cmp there
+esr7a:
+    dec esr7_hard_scroll_counter
+    bne !+
+    // end this part and execute Video part
+    jmp $9300 // video.prg
+!:
     rts
+esr7_hard_scroll_counter: .byte 0  // how many times to scroll up and populate screen line 25. 0 mean 256 lines
 
+scroll_up:
+    ldy #$00  // rows
+vscroll_loop:
+    lda screen_column0_hi, y
+    sta su_dst + 2
+    lda screen_column0_lo, y
+    sta su_dst + 1
+    iny
+    lda screen_column0_hi, y
+    sta su_src + 2
+    lda screen_column0_lo, y
+    sta su_src + 1
+    ldx #$27
+su_src:
+    lda $ffff, x
+su_dst:
+    sta $ffff, x
+    dex
+    bpl su_src
+    cpy #24
+    bne vscroll_loop
 
-// up_copy_screen:
-// . for (var i=0;i<40*24;i++) {
-//     lda $0400+40 + i
-//     sta $0400 + i
-// }
-// rts
-    // hardscroll
+    // copy new content to line 24
+    ldx #$00
+copy_loop:
+    lda $9800
+    sta $07c0, x
+    inc copy_loop + 1
+    bne !+
+    inc copy_loop + 2
+!:  inx
+    cpx #$28
+    bne copy_loop
     rts
+screen_column0_hi: .byte $04, $04, $04, $04, $04, $04, $04, $05, $05, $05, $05, $05, $05, $06, $06, $06, $06, $06, $06, $06, $07, $07, $07, $07, $07
+screen_column0_lo: .byte $00, $28, $50, $78, $A0, $C8, $F0, $18, $40, $68, $90, $B8, $E0, $08, $30, $58, $80, $A8, $D0, $F8, $20, $48, $70, $98, $C0
+
 
 screen_pos:
 .word search_topleft +0*40*8, search_topleft + 1*40*8, search_topleft + 2*40*8
@@ -625,6 +672,7 @@ iskip_music:
 !:
     inc update_counter
     lda update_counter
+speed_control:
     #if HURRY_UP
         cmp #$01
     #else 
@@ -723,6 +771,17 @@ update_counter: .byte 0
     lda #$04  // i
     sta shslc + 8
     sta shslc + 48
+}
+
+.macro unet_hondani_small_logo_colors() {
+    // Hondani logo colors back to gray
+    .const shslc = $d800
+    lda #$2c
+    ldx #$09
+!:  sta shslc + 0, x
+    sta shslc + 40, x
+    dex
+    bpl !-
 }
 
 .macro clear_color_0400memory(fg_color, bg_color) {

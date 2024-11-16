@@ -1,3 +1,5 @@
+// Note: this build file is deprecated, use Makefile instead - "make disk"
+
 // Instructions
 // Build all prg depejndencies
 // To support autostart, find 2 empty sectors in the same track

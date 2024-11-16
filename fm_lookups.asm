@@ -36,7 +36,7 @@ search_hires: .fill search_data.getSize(), search_data.get(i)
 
 
 
-*=$5300 "Part2_lookups"
+*=$5400 "Part2_lookups"
 font3x4_lookup:
 // create byte lookup table for 3x4 font offset. Each char is 4*4*8=128 bytes big
 .for (var i=0;i<NUM_CHARS;i++) {

@@ -1,15 +1,13 @@
 # Hondani Meetro
 
 ## Issues
+- video blika
+- results ikony
 - pregenerovat nahodne velka pismena, schazi tam pravy sloupec
-- font search baru
-- text, ktery se vyhledava
-- schazi scroller part
 - zapakovat prg, vejde se nam to na disketu?
-- zprovoznit autoload
-- napojit video
 - vylepsit google font - pixel-detail
 
+### Nice to have
 - loader by mel umet switchovat banky
 - fryba by mohl mit font optimalizovany pro sebe. Mozna to nebude velky rozdil.
 

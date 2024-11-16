@@ -39,6 +39,7 @@ disk: clean prgs
 	c1541 -attach $(D64_FILE) -write data/video_font.bin vfont
 	c1541 -attach $(D64_FILE) -write data/search-font.bin rfont
 	c1541 -attach $(D64_FILE) -write data/results-text.bin restx
+	c1541 -attach $(D64_FILE) -write data/results-vert.bin vertx
 	c1541 -attach $(D64_FILE) -write data/F5.bin f5
 	c1541 -attach $(D64_FILE) -write data/BA.bin ba
 	c1541 -attach $(D64_FILE) -write data/BB.bin bb
