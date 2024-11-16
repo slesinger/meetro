@@ -27,6 +27,7 @@ start:
     lda $d3
     sta cursor_x
     lda $d6
+    lda #23
     sta cursor_y
 
     // lda #$00
@@ -213,6 +214,11 @@ my_chrout:
     ldx #$00
     stx cursor_x
     inc cursor_y
+    lda cursor_y
+    cmp #$19
+    bne !+
+    jsr scroll_up
+!:  
     ldy cursor_y
     lda screen_column0_hi, y
     sta cursor_ptr+1
@@ -249,8 +255,7 @@ my_regular_chrout:
     lda cursor_y
     cmp #$19
     bne !+
-    dec cursor_y
-    scroll_up()
+    jsr scroll_up
 !:  
     rts
 
@@ -265,7 +270,7 @@ t_error1:
     .encoding "screencode_upper"
     .text "TRACEBACK (MOST RECENT CALL LAST):"; .byte NL
     .text @"  FILE \"MAIN.PY\" LINE 55"; .byte NL
-    .text "HTTP EXCEPTION: HOST NOT FOUND"; .byte NL
+    // .text "HTTP EXCEPTION: HOST NOT FOUND"; .byte NL
     .text ">>> "
 t_conv1:
     // human input
@@ -287,27 +292,37 @@ t_conv1:
 
 
 // scroll screen at $0400 by line up
-.macro scroll_up() {
-    // iterate over Y from 1 to 24
-
-
+// Modifies x,y
+scroll_up:
+    dec cursor_y
+    ldy #$00  // rows
+copy_loop:
+    lda screen_column0_hi, y
+    sta su_dst + 2
+    lda screen_column0_lo, y
+    sta su_dst + 1
+    iny
+    lda screen_column0_hi, y
+    sta su_src + 2
+    lda screen_column0_lo, y
+    sta su_src + 1
+    ldx #$27
+su_src:
+    lda $ffff, x
+su_dst:
+    sta $ffff, x
+    dex
+    bpl su_src
+    cpy #24
+    bne copy_loop
 
     // clear line 24
-    
-
-
-    // E9C8	29 03	AND #%00000011	mask 0000 00xx, line memory page
-// E9CA	0D 88 02	ORA $0288	OR with screen memory page
-// E9CD	85 AD	STA $AD	save next/previous line pointer high byte
-// E9CF	20 E0 E9	JSR $E9E0	calculate pointers to screen lines colour RAM
-// E9D2	A0 27	LDY #$27	set the column count
-// E9D4	B1 AC	LDA ($AC),Y	get character from next/previous screen line
-// E9D6	91 D1	STA ($D1),Y	save character to current screen line
-// E9D8	B1 AE	LDA ($AE),Y	get colour from next/previous screen line colour RAM
-// E9DA	91 F3	STA ($F3),Y	save colour to current screen line colour RAM
-// E9DC	88	DEY	decrement column index/count
-// E9DD	10 F5	BPL $E9D4	loop if more to do
-// E9DF	60	RTS	
-}
+    ldx #$27
+    lda #$20
+clear_loop:
+    sta $07c0, x
+    dex
+    bpl clear_loop
+    rts
 
 }
