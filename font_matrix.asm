@@ -67,7 +67,7 @@ lload_loop:
     clc
     ldx #<file_font  // Vector pointing to a string containing loaded file name
     ldy #>file_font
-    jsr loadraw
+    jsr loadcompd
     bcs load_error
     lda #$02
     sta what_to_load
@@ -77,12 +77,12 @@ lload_loop:
     clc
     ldx #<file_texts  // Vector pointing to a string containing loaded file name
     ldy #>file_texts
-    jsr loadraw
+    jsr loadcompd
     bcs load_error
     clc
     ldx #<file_verts  // Vector pointing to a string containing loaded file name
     ldy #>file_verts
-    jsr loadraw
+    jsr loadcompd
     bcs load_error
     lda #$00
     sta what_to_load
@@ -92,7 +92,7 @@ lload_loop:
     clc
     ldx #<file_video_code  // Vector pointing to a string containing loaded file name
     ldy #>file_video_code
-    jsr loadraw
+    jsr loadcompd
     bcs load_error
     lda #$00
     sta what_to_load
@@ -103,6 +103,7 @@ lload_loop:
     ldx #<file_fryba  // Vector pointing to a string containing loaded file name
     ldy #>file_fryba
     jsr loadraw
+    brk
     bcs load_error
     lda #$00
     sta what_to_load
@@ -375,6 +376,8 @@ esr_stage6:  // copy article 2 and Hoooondani
  
 
 esr_stage7:  // wait and switch irq jsr to next stage
+    lda #$04
+    sta what_to_load
     set_wait_frames(0)
     // switch to next phase
     lda #<exec_scroll_results_scroll
@@ -382,8 +385,6 @@ esr_stage7:  // wait and switch irq jsr to next stage
     lda #>exec_scroll_results_scroll
     sta stage_jsr + 2
     unet_hondani_small_logo_colors()
-    lda #$04
-    sta what_to_load
     rts
 
 //verticaler

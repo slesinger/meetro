@@ -41,14 +41,14 @@ start:
     clc
     ldx #<file_font  // Vector pointing to a string containing loaded file name
     ldy #>file_font
-    jsr loadraw
+    jsr loadcompd
     bcs load_error
     #if RUNNING_COMPLETE
     #else // runing separate
         clc
         ldx #<file_f5  // Vector pointing to a string containing loaded file name
         ldy #>file_f5
-        jsr loadraw
+        jsr loadraw  // TODO loadcompd
         bcs load_error
         clc
         ldx #<file_music  // Vector pointing to a string containing loaded file name
@@ -127,7 +127,7 @@ load_loop:
     clc
     ldx #<file_b  // Vector pointing to a string containing loaded file name
     ldy #>file_b
-    jsr loadraw
+    jsr loadcompd
     bcs load_error2
     inc file_b + 1  // increment file name  BA > BB > BC ...
 
@@ -166,7 +166,7 @@ wait_for_last_block_to_playback:
     clc
     ldx #<file_scroller  // Vector pointing to a string containing loaded file name
     ldy #>file_scroller
-    jsr loadraw
+    jsr loadcompd
     bcs load_error2
     jmp $9800  // execute next part
 

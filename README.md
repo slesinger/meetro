@@ -3,18 +3,14 @@
 MIT License
 
 ## Zkouknout
-- results-vertical.src - postupne proridnout text
 - naloaduje se F5 z FM, tj pred jmp $9300?
-- pozdezreni, ze end_of_video: skonci driv nez dojede posledni frame robota
+- postupne promazavat font ve vertikalnim partu - jak to vylepsit aby si mohli precist skvele texty
 
 ## Issues
-- napojit na video 3d scroller
-- kde fryba?
-- video blika - nestiha ladovat, je na spatnych sektorech? pomuze tscrunch?
+- napojit na video 3d scroller - predelat na irq
+- kde je fryba?
 - results ikony
 - pregenerovat nahodne velka pismena, schazi tam pravy sloupec
-- postupne promazavat font ve vertikalnim partu
-- zapakovat prg, vejde se nam to na disketu?
 - vylepsit google font - pixel-detail
 - dir art
 

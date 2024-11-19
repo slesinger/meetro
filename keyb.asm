@@ -69,13 +69,14 @@ http_error_printed:
     clc
     ldx #<file_music  // Vector pointing to a string containing loaded file name
     ldy #>file_music
-    jsr loadraw
+    // jsr loadraw
+    jsr loadcompd
     bcs load_error
 
     clc
     ldx #<file_fontm  // Vector pointing to a string containing loaded file name
     ldy #>file_fontm
-    jsr loadraw
+    jsr loadcompd
     bcs load_error
 
     // load until keyb finishes

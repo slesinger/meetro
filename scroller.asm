@@ -117,7 +117,7 @@ cont1:
     jsr $fd15
     jsr $e3bf
     jsr $ff5b
-    inc $d020  sem se to nedostane. asi je potreba tento part predelat na IRQ a zbacit se tecj jsr od line 110
+    inc $d020  // TODO sem se to nedostane. asi je potreba tento part predelat na IRQ a zbavit se tech jsr od line 110
     sei
     lda #<draw
     sta $0318
