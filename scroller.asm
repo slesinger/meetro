@@ -64,20 +64,11 @@ start:
     jsr install
     bcs load_error
     clc
-    ldx #<pbtmp  // Vector pointing to a string containing loaded file name
-    ldy #>pbtmp
-    jsr loadraw
-    bcs load_error
-    clc
-    ldx #<pcolr  // Vector pointing to a string containing loaded file name
-    ldy #>pcolr
-    jsr loadraw
-    bcs load_error
-    clc
     ldx #<file_music  // Vector pointing to a string containing loaded file name
     ldy #>file_music
     jsr loadraw
     bcs load_error
+#endif 
     jmp cont1
 file_music:.text "MUSIC"  //filename on diskette
           .byte $00
@@ -91,27 +82,42 @@ load_error:
     sta $d020
     sta $d021
     jmp *
+
 cont1:
+    // load bitmap
+    clc
+    ldx #<pbtmp  // Vector pointing to a string containing loaded file name
+    ldy #>pbtmp
+    jsr loadraw
+    bcs load_error
+    // load color data
+    clc
+    ldx #<pcolr  // Vector pointing to a string containing loaded file name
+    ldy #>pcolr
+    jsr loadraw
+    bcs load_error
     // start music
+#if RUNNING_COMPLETE
+#else
     ldx #0
     ldy #0
     lda #0
     jsr $1000
-#endif 
     lda #$36
     sta $01
     // init irq
+#endif 
     sei
     cld
     ldx #$fb
     txs
     lda #$37
     sta $01
-//     jsr $fda3
-//     jsr $fd15
-//     jsr $e3bf
-//     jsr $ff5b
-// jmp *
+    jsr $fda3
+    jsr $fd15
+    jsr $e3bf
+    jsr $ff5b
+    inc $d020  sem se to nedostane. asi je potreba tento part predelat na IRQ a zbacit se tecj jsr od line 110
     sei
     lda #<draw
     sta $0318
@@ -121,7 +127,6 @@ cont1:
     sta $0319
     sta $fffb
     sta $ffff
-
     // set colors
     lda #BLACK  // black large empty space
     sta $d020

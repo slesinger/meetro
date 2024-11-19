@@ -394,7 +394,27 @@ exec_scroll_results_scroll:
     ldx $dc01
     cpx #$ff
     bne !+
-    // fine vertical scroll ??
+    // corrupt font
+    lda seed
+    beq doEor
+    asl
+    bcc noEor
+doEor:
+    eor #$1d
+noEor:
+    sta seed  // pseudo-random number generated
+    // and #$fe  // do not clear odd chars
+    sta seed_sta + 1
+    sta seed_sta + 4
+    sta seed_sta + 7
+    inc seed_sta + 4
+    inc seed_sta + 7
+    inc seed_sta + 7
+    lda #$00 // clear a line in a character font
+seed_sta:
+    sta $2000
+    sta $2000
+    sta $2000
     // hard vertical scroll
     jsr scroll_up
     lda esr7_hard_scroll_counter
@@ -410,6 +430,7 @@ esr7a:
 !:
     rts
 esr7_hard_scroll_counter: .byte 0  // how many times to scroll up and populate screen line 25. 0 mean 256 lines
+seed: .byte 24
 
 scroll_up:
     ldy #$00  // rows

@@ -11,21 +11,7 @@
     *= loadraw "loader_resident" // this will be moved to 9000 (loadraw)
     .var loader_c64 = LoadBinary("loader-c64.prgx", BF_C64FILE)
     loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
-
-    // .var music = LoadSid("Ucieczka_z_Tropiku.sid")  // music is loaded in previous part. Separately is disabled
-    // *=music.location "Part2_music"
-    // .fill music.size, music.getData(i)
-
-    // .var font = LoadBinary("data/search-font.bin", BF_C64FILE)  // is loaded during this part
-    // *=$2000 "Part4_font_results"
-    // .fill font.getSize(), font.get(i)
-
-    // .var results_text = LoadBinary("data/results-text.bin")  // is loaded during this part
-    // *=$5a00 "Part4_font_restexts"
-    // .fill results_text.getSize(), results_text.get(i)
 #endif 
-
-
 
 .var font_data = LoadBinary("data/googlefont.bin")  // 3x4 characters, 32 letters "?abcdefghijklmnopqrstuvwxyzHOD2+"
 *=$4000 "Part2_font"

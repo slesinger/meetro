@@ -1,18 +1,22 @@
 # Hondani Meetro
 
+MIT License
+
 ## Zkouknout
 - results-vertical.src - postupne proridnout text
 - naloaduje se F5 z FM, tj pred jmp $9300?
 - pozdezreni, ze end_of_video: skonci driv nez dojede posledni frame robota
 
 ## Issues
-- 3d scroller zobrazit obrazek, zmenit barvy
 - napojit na video 3d scroller
-- video blika - nestiha ladovat, je na spatncyh sektorech? pomuze tscrunch?
+- kde fryba?
+- video blika - nestiha ladovat, je na spatnych sektorech? pomuze tscrunch?
 - results ikony
 - pregenerovat nahodne velka pismena, schazi tam pravy sloupec
+- postupne promazavat font ve vertikalnim partu
 - zapakovat prg, vejde se nam to na disketu?
 - vylepsit google font - pixel-detail
+- dir art
 
 
 ### Nice to have
