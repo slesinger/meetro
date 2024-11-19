@@ -5,7 +5,7 @@ Save as RGB PNG file in Gimp and convert to `planety_bmpdata.a`
 ./c64fy.py -hires 1 planety.png
 ```
 
-Then, rename `planety_bmpdata.a` to <project root folder, next to scroller.asm>/planety_bmpdata.asm`
+Then, move `planety_bmpdata.asm` to <project root folder, next to scroller.asm>/planety_bmpdata.asm`
 
 Edit the file to get such structure:
 ```asm

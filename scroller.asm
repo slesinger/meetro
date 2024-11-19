@@ -46,10 +46,6 @@
 #else
     // This has to happen only when starting separately
 
-    // .var music = LoadSid("Ucieczka_z_Tropiku.sid")  // music is loaded in previous part. Separately is disabled
-    // *=music.location "Part2_music"
-    // .fill music.size, music.getData(i)
-
     *= install "loader_install" // same as install jsr
     .var installer_c64 = LoadBinary("tools/krill194/loader/build/install-c64.prg", BF_C64FILE)
     installer_ptr: .fill installer_c64.getSize(), installer_c64.get(i)
@@ -57,14 +53,6 @@
     *= loadraw "loader_resident" // same as loader code block address
     .var loader_c64 = LoadBinary("tools/krill194/loader/build/loader-c64.prg", BF_C64FILE)
     loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
-
-    // .var planet_bitmap = LoadBinary("planet_bitmap.prg", BF_C64FILE)  // is loaded during this part
-    // *=$2000 "Part5_bitmap_data"
-    // .fill planet_bitmap.getSize(), planet_bitmap.get(i)
-
-    // .var planet_color = LoadBinary("planet_color.prg", BF_C64FILE)  // is loaded during this part
-    // *=$0400 "Part5_bitmap_color"
-    // .fill planet_color.getSize(), planet_color.get(i)
 
     BasicUpstart2(start)
 #endif

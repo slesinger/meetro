@@ -28,6 +28,7 @@
 
 import PIL.Image
 import sys
+import os
 import random
 from rlencode import RLEncode
 import c64fylib
@@ -476,8 +477,11 @@ im.putdata(stretchedcolors)
 if not quiet:
     Show(im)
 
+
 def hexstr(v):
     return '$' + ('00' + hex(v)[2:])[-2:]
+
+
 def dumpbytes(v):
     n = 0
     z = ''
@@ -486,6 +490,23 @@ def dumpbytes(v):
         z += '.byte '
         for i in range(n, m):
             z += hexstr(v[i]) + ', '
+        z = z[:-2] + '\n'
+        n += 16
+    return z
+
+
+def dumpbytes_swapped(v):
+    n = 0
+    z = ''
+    while n < len(v):
+        m = min(n + 16, len(v))
+        z += '.byte '
+        for i in range(n, m):
+            val = v[i]
+            lo = val & 0x0f
+            hi = val >> 4
+            val_swapped = (lo << 4) + hi
+            z += hexstr(val_swapped) + ', '
         z = z[:-2] + '\n'
         n += 16
     return z
@@ -687,16 +708,16 @@ if charmode:
         dfl += inputbasefilename + '_fixcolors\n'
     dfl += '.byte '
     dfl += hexstr(fixindices[0]) + ', ' + hexstr(fixindices[1]) + ', ' + hexstr(fixindices[2]) + '\n'
-    f = open(outputbasefilename + '_fixcolors.a','wt')
+    f = open(outputbasefilename + '_fixcolors.a', 'wt')
     f.writelines(dfl)
     f.close()
     dfl = ''
     if usedatalabels:
         dfl += '\n!align 255,0\n' + inputbasefilename + '_charsetdata\n'
     if firstchar > 0:
-        dfl += '!src "' + inputbasefilename + '_chardata0_' + str(firstchar-1) +'.a"\n'
+        dfl += '!src "' + inputbasefilename + '_chardata0_' + str(firstchar-1) + '.a"\n'
     dfl += dumpbytes(charsetbytes)
-    f = open(outputbasefilename + '_chardata.a','wt')
+    f = open(outputbasefilename + '_chardata.a', 'wt')
     f.writelines(dfl)
     f.close()
     dfl = ''
@@ -706,7 +727,7 @@ if charmode:
     num_tiles_x = num_char_x // tilex
     num_tiles_y = num_char_y // tiley
     num_tiles = num_tiles_x * num_tiles_y
-    print('Tile count',num_tiles_x,'*',num_tiles_y,', #CharBlocks',len(codeblocks),'of max',num_char_x*num_char_y)
+    print('Tile count', num_tiles_x,'*', num_tiles_y,', #CharBlocks', len(codeblocks), 'of max', num_char_x*num_char_y)
     tiledata = []
     for y in range(0, num_tiles_y):
         for x in range(0, num_tiles_x):
@@ -768,14 +789,14 @@ else:
     if not hiresmode:
         dfl += inputbasefilename + '_backgroundcolor\n.byte '
         dfl += hexstr(backgroundindex)
-    dfl += '\n\n' + inputbasefilename + '_bitmapdata\n'
+    dfl += '\n\n//' + os.path.basename(inputbasefilename) + '_bitmapdata:\n'
     dfl += dumpbytes(bitmapbytes)
-    dfl += '\n\n' + inputbasefilename + '_chardata\n'
-    dfl += dumpbytes(chardata)
+    dfl += '\n\n' + os.path.basename(inputbasefilename) + '_chardata:\n'
+    dfl += dumpbytes_swapped(chardata)
     if not hiresmode:
-        dfl += '\n\n' + inputbasefilename + '_colordata\n'
+        dfl += '\n\n' + os.path.basename(inputbasefilename) + '_colordata:\n'
         dfl += dumpbytes(colordata)
-    f = open(outputbasefilename + '_bmpdata.a', 'wt')
+    f = open(outputbasefilename + '_bmpdata.asm', 'wt')
     f.writelines(dfl)
     f.close()
     # RLE encoding of data

@@ -18,18 +18,6 @@
     // Started as whole compilation of parts
 #else
     // This has to happen only when starting separately
-    // .var music = LoadSid("Ucieczka_z_Tropiku.sid")
-    // *=music.location "Part2_music"  // $1000
-    // .fill music.size, music.getData(i)
-
-    // .var font = LoadBinary("data/video_font.bin", BF_C64FILE)
-    // *=$2000 "Part4_font1"
-    // .fill font.getSize(), font.get(i)
-
-    // // Include Fryba
-    // .var fryba5 = LoadBinary("data/F5.bin", BF_C64FILE)
-    // *=$6400 "Part4_Fryba5.bin"
-    // .fill fryba5.getSize(), fryba5.get(i)
 
     *= install "loader_install" // same as install jsr
     .var installer_c64 = LoadBinary("tools/krill194/loader/build/install-c64.prg", BF_C64FILE)
