@@ -1,4 +1,4 @@
-.PHONY: clean video build-loader
+.PHONY: clean video scroller build-loader
 
 KICKASS = /usr/bin/java -jar /home/honza/projects/c64/pc-tools/kickass/KickAss.jar
 D64_FILE = meetro.d64
@@ -24,7 +24,10 @@ fontm:
 video:
 	$(KICKASS) video.asm
 
-prgs: keyb fontm video
+scroller:
+	$(KICKASS) scroller.asm
+
+prgs: keyb fontm video scroller
 
 disk: clean prgs
 	rm -f $(D64_FILE)
@@ -36,6 +39,7 @@ disk: clean prgs
 	c1541 -attach $(D64_FILE) -write font_matrix.prg fontm
 	c1541 -attach $(D64_FILE) -write data/ucieczka.music music
 	c1541 -attach $(D64_FILE) -write video.prg video
+	c1541 -attach $(D64_FILE) -write scroller.prg scrll
 	c1541 -attach $(D64_FILE) -write data/video_font.bin vfont
 	c1541 -attach $(D64_FILE) -write data/search-font.bin rfont
 	c1541 -attach $(D64_FILE) -write data/results-text.bin restx

@@ -55,13 +55,13 @@ start:
     ldy #>file_font
     jsr loadraw
     bcs load_error
-    clc
-    ldx #<file_f5  // Vector pointing to a string containing loaded file name
-    ldy #>file_f5
-    jsr loadraw
-    bcs load_error
     #if RUNNING_COMPLETE
     #else // runing separate
+        clc
+        ldx #<file_f5  // Vector pointing to a string containing loaded file name
+        ldy #>file_f5
+        jsr loadraw
+        bcs load_error
         clc
         ldx #<file_music  // Vector pointing to a string containing loaded file name
         ldy #>file_music
@@ -93,15 +93,7 @@ start2:
     // set gfx colors
     lda #BORDER_COLOR
     sta $d020
-    // fill $d800 with foreground color
-    ldx #$00
-!:
-    sta $d800,x
-    sta $d900,x
-    sta $da00,x
-    sta $db00,x
-    dex
-    bne !-
+    jsr fill_color  // fill $d800 with foreground color
     // fill $d800 line 22 with breaking news color
     lda #$00
     ldx #$27
@@ -147,7 +139,7 @@ load_loop:
     clc
     ldx #<file_b  // Vector pointing to a string containing loaded file name
     ldy #>file_b
-    jsr loadraw  //! pres toto se nedostane
+    jsr loadraw
     bcs load_error2
     inc file_b + 1  // increment file name  BA > BB > BC ...
 
@@ -167,8 +159,28 @@ wait_for_last_block_to_playback:
     sta $0315
     cli
 end_of_video:
-    inc $d020
-    jmp end_of_video
+    // background color is defined in $d800-$dbff as $0f. 0 is not important
+    // fill $d800 with $0c color (GRAY)
+    lda #$0c
+    sta $d021
+    jsr fill_color
+    // fill $d800 with $0b color (DARK_GRAY)
+    lda #$0b
+    sta $d021
+    jsr fill_color
+    // now video pixels are same color as background
+    // clear $0400 and switch screen there
+    //TODO
+    lda #$00
+    sta $d020
+    sta $d021
+    // load 3d scroller part with planets
+    clc
+    ldx #<file_b  // Vector pointing to a string containing loaded file name
+    ldy #>file_b
+    jsr loadraw
+    bcs load_error2
+    jmp $8000 // TODO kde zacina kod?
 
 load_error2:
     sta $0400  // display error screen code
@@ -181,6 +193,9 @@ loading_sempahore:  // 0: load next part of video, non-zero: wait
     .byte 0  //initially load, first part is pre-loaded but load the next one immediately
 
 file_b:   .text "BA"  //filename on diskette
+          .byte $00
+file_scroller:
+          .text "scrll"  //filename on diskette
           .byte $00
 
 
@@ -387,6 +402,17 @@ tf1:sta $ff70,y
     bne sf1
     rts
 
+// color in A register
+fill_color:
+    ldx #$00
+!:
+    sta $d800,x
+    sta $d900,x
+    sta $da00,x
+    sta $db00,x
+    dex
+    bne !-
+    rts    
 .macro distribute_font() { // not needed anymore
     ldx #0
 !:
@@ -418,27 +444,5 @@ tf1:sta $ff70,y
 }
 
 .file [name="video.prg", segments="VIDEO"]
-
-// See build-floppy.asm that replaces the below.
-// .disk [filename="video.d64", name="HONDANI", id="2025!"]
-// {
-//     [name="START", type="prg", segments="VIDEO" ],
-//     // [name="START", type="prg", prgFiles="krillsteststart.prg" ],
-//     [name="F5", type="prg", prgFiles="data/F5.bin" ],
-//     [name="BA", type="prg", prgFiles="data/BA.bin" ],
-//     [name="BB", type="prg", prgFiles="data/BB.bin" ],
-//     [name="BC", type="prg", prgFiles="data/BC.bin" ],
-//     [name="BD", type="prg", prgFiles="data/BD.bin" ],
-//     [name="BE", type="prg", prgFiles="data/BE.bin" ],
-//     [name="BF", type="prg", prgFiles="data/BF.bin" ],
-//     [name="BG", type="prg", prgFiles="data/BG.bin" ],
-//     [name="BH", type="prg", prgFiles="data/BH.bin" ],
-//     [name="BI", type="prg", prgFiles="data/BI.bin" ],
-//     [name="BJ", type="prg", prgFiles="data/BJ.bin" ],
-//     [name="BK", type="prg", prgFiles="data/BK.bin" ],
-//     [name="BL", type="prg", prgFiles="data/BL.bin" ],
-//     [name="BM", type="prg", prgFiles="data/BM.bin" ],
-//     [name="BN", type="prg", prgFiles="data/BN.bin" ],
-// }
 
 }  // end namespace PART4_ns

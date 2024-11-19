@@ -1,11 +1,19 @@
 # Hondani Meetro
 
+## Zkouknout
+- results-vertical.src - postupne proridnout text
+- naloaduje se F5 z FM, tj pred jmp $9300?
+- pozdezreni, ze end_of_video: skonci driv nez dojede posledni frame robota
+
 ## Issues
-- video blika
+- 3d scroller
+- napojit na video 3d scroller
+- video blika - nestiha ladovat, je na spatncyh sektorech? pomuze tscrunch?
 - results ikony
 - pregenerovat nahodne velka pismena, schazi tam pravy sloupec
 - zapakovat prg, vejde se nam to na disketu?
 - vylepsit google font - pixel-detail
+
 
 ### Nice to have
 - loader by mel umet switchovat banky
