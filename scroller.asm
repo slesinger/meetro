@@ -14,6 +14,7 @@
 
 .namespace PART5_ns {
 #import "fm_const.asm"
+#import "loadersymbols-c64.inc"
 //--------
 .const countlines = 8 //8 lines in char
 .const countchar = 16 //16 chars to shift
@@ -44,82 +45,130 @@
     // Started as whole compilation of parts
 #else
     // This has to happen only when starting separately
-    .var music = LoadSid("Ucieczka_z_Tropiku.sid")  // music is loaded in previous part. Separately is disabled
-    *=music.location "Part2_music"
-    .fill music.size, music.getData(i)
-      BasicUpstart2(start)
+
+    // .var music = LoadSid("Ucieczka_z_Tropiku.sid")  // music is loaded in previous part. Separately is disabled
+    // *=music.location "Part2_music"
+    // .fill music.size, music.getData(i)
+
+    *= install "loader_install" // same as install jsr
+    .var installer_c64 = LoadBinary("tools/krill194/loader/build/install-c64.prg", BF_C64FILE)
+    installer_ptr: .fill installer_c64.getSize(), installer_c64.get(i)
+
+    *= loadraw "loader_resident" // same as loader code block address
+    .var loader_c64 = LoadBinary("tools/krill194/loader/build/loader-c64.prg", BF_C64FILE)
+    loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
+
+    // .var planet_bitmap = LoadBinary("planet_bitmap.prg", BF_C64FILE)  // is loaded during this part
+    // *=$2000 "Part5_bitmap_data"
+    // .fill planet_bitmap.getSize(), planet_bitmap.get(i)
+
+    // .var planet_color = LoadBinary("planet_color.prg", BF_C64FILE)  // is loaded during this part
+    // *=$0400 "Part5_bitmap_color"
+    // .fill planet_color.getSize(), planet_color.get(i)
+
+    BasicUpstart2(start)
 #endif
 //---
 *= $9800 "Part5_code"
 start:
 #if RUNNING_COMPLETE
 #else
-        // start music
-        ldx #0
-        ldy #0
-        lda #0
-        jsr $1000
+    jsr install
+    bcs load_error
+    clc
+    ldx #<pbtmp  // Vector pointing to a string containing loaded file name
+    ldy #>pbtmp
+    jsr loadraw
+    bcs load_error
+    clc
+    ldx #<pcolr  // Vector pointing to a string containing loaded file name
+    ldy #>pcolr
+    jsr loadraw
+    bcs load_error
+    clc
+    ldx #<file_music  // Vector pointing to a string containing loaded file name
+    ldy #>file_music
+    jsr loadraw
+    bcs load_error
+    jmp cont1
+file_music:.text "MUSIC"  //filename on diskette
+          .byte $00
+pbtmp:    .text "PBTMP"  //filename on diskette
+          .byte $00
+pcolr:    .text "PCOLR"  //filename on diskette
+          .byte $00
+load_error:
+    sta $0400  // display error screen code
+    lda #$04
+    sta $d020
+    sta $d021
+    jmp *
+cont1:
+    // start music
+    ldx #0
+    ldy #0
+    lda #0
+    jsr $1000
 #endif 
-      lda #$36
-      sta $01
-      // init irq
-      sei
-      cld
-      ldx #$fb
-      txs
-      lda #$37
-      sta $01
-      jsr $fda3
-      jsr $fd15
-      jsr $e3bf
-      jsr $ff5b
-      sei
-      lda #<draw
-      sta $0318
-      sta $fffa
-      sta $fffe
-      lda #>draw
-      sta $0319
-      sta $fffb
-      sta $ffff
+    lda #$36
+    sta $01
+    // init irq
+    sei
+    cld
+    ldx #$fb
+    txs
+    lda #$37
+    sta $01
+//     jsr $fda3
+//     jsr $fd15
+//     jsr $e3bf
+//     jsr $ff5b
+// jmp *
+    sei
+    lda #<draw
+    sta $0318
+    sta $fffa
+    sta $fffe
+    lda #>draw
+    sta $0319
+    sta $fffb
+    sta $ffff
 
-      // set colors
-      lda #BLACK  // black large empty space
-      sta $d020
-      lda #WHITE // TODO tohle nema vliv // white pixels
-      sta $d021
-      lda $d011
-      and #%11101111   // disable screen
-      sta $d011
-      //  jsr fillchar  //fill char
-      jsr settbadr  //help proc. for prepare data
-      jsr makespeedcode //make long and borning code for dotscroll
-                        //and setting plots for wait look
-      //  jsr speedcode //now plots will be clear
-      //  jsr clearchar //now char be clear
-      jsr makespeedclear //like before for clear plots and set plots
-      //  jsr speedclear //ok now clear plots
+    // set colors
+    lda #BLACK  // black large empty space
+    sta $d020
+    sta $d021   // does not have real effect due to 0400 color memory
+    lda $d011
+    and #%11101111   // disable screen
+    sta $d011
+    //  jsr fillchar  //fill char
+    jsr settbadr  //help proc. for prepare data
+    jsr makespeedcode //make long and borning code for dotscroll
+                    //and setting plots for wait look
+    //  jsr speedcode //now plots will be clear
+    //  jsr clearchar //now char be clear
+    jsr makespeedclear //like before for clear plots and set plots
+    //  jsr speedclear //ok now clear plots
 
-      jsr initgraph //enable hires etc.
-      lda $d011
-      ora #%00010000  // enable screen
-      sta $d011
+    jsr initgraph //enable hires etc.
+    lda $d011
+    ora #%00010000  // enable screen
+    sta $d011
 
 //==========
 //here is irq nmi and brk for neverending loop
 //in this sample we don't work in the irq
 //==========         
 draw:
-
-         sei
-         cld
-         ldx #$fb  //stack init
-         txs
-         lda #$38  //show all 64 ram (in this sample not necessary)
-         sta $01
-         jsr clearchar 
-         jsr speedclear //clear plots
-         sta posscroll  //start scrol from zero pos.
+    sei
+    cld
+    ldx #$fb  //stack init
+    txs
+    lda #$38  //show all 64 ram (in this sample not necessary)
+    sta $01
+    jsr clearchar 
+    jsr speedclear //clear plots
+    sta posscroll  //start scrol from zero pos.
 
 
 //after init and make speedcode here is mainlop
@@ -129,36 +178,36 @@ draw:
 //of course speedcode from $4000 to $7d03 still over here         
 
 mainloop:
-         jsr rolchar //shift data for dot scroll
-         lda #$35    //show i/o
-         sta $01
-         
-         ldx #$c8
-         cpx $d012
-         bne *-3
+    jsr rolchar //shift data for dot scroll
+    lda #$35    //show i/o
+    sta $01
 
-        //  inc $d020
-         lda #$38  //show all ram
-         sta $01
-         jsr speedclear //clear plots on the bitmap
-         jsr speedcode  //display plots of chars on 3d trajectory
-         lda #$35       //show i/o vic etc.
-         sta $01
-        //  dec $d020
-        
-        // play music
+    ldx #$c8
+    cpx $d012
+    bne *-3
+
+    //  inc $d020
+    lda #$38  //show all ram
+    sta $01
+    jsr speedclear //clear plots on the bitmap
+    jsr speedcode  //display plots of chars on 3d trajectory
+    lda #$35       //show i/o vic etc.
+    sta $01
+    //  dec $d020
+
+    // play music
 #if RUNNING_COMPLETE
 #else
-        jsr $1003
+    jsr $1003
 #endif 
-         lda #$ef
-         cmp $dc01 //space?
-         bne mainloop
-         cmp $dc01
-         beq *-3
-         lda #$38
-         sta $01
-         brk //go to draw of course
+    lda #$ef
+    cmp $dc01 //space?
+    bne mainloop
+    cmp $dc01
+    beq *-3
+    lda #$38
+    sta $01
+    brk //go to draw of course
 
 //==============
 //clear or fill char data
@@ -409,32 +458,32 @@ initgraph:
          sta $d011
 
 
-         ldx #$00
-         lda #(BLACK<<4)+LIGHT_GREY
+//          ldx #$00
+//          lda #(WHITE<<4)+BLACK
          
-!:
-         sta $0400,x
-         sta $0500,x
-         sta $0600,x
-         sta $06f8,x
-         inx
-         bne !-
-         stx posscroll
+// !:
+//          sta $0400,x
+//          sta $0500,x
+//          sta $0600,x
+//          sta $06f8,x
+//          inx
+//          bne !-
+//          stx posscroll
 
-         ldx #>screen
-         stx vectr1+1
-         ldy #$00
-         sty vectr1
+//          ldx #>screen
+//          stx vectr1+1
+//          ldy #$00
+//          sty vectr1
 
 
-         lda #$00
-!:
-         sta (vectr1),y
-         iny
-         bne !-
-         inc vectr1+1
-         dex
-         bne !-
+//          lda #$00
+// !:
+//          sta (vectr1),y
+//          iny
+//          bne !-
+//          inc vectr1+1
+//          dex
+//          bne !-
          rts
 //===========
 //calculate tb row address in the bitmap

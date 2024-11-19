@@ -6,7 +6,7 @@
 - pozdezreni, ze end_of_video: skonci driv nez dojede posledni frame robota
 
 ## Issues
-- 3d scroller
+- 3d scroller zobrazit obrazek, zmenit barvy
 - napojit na video 3d scroller
 - video blika - nestiha ladovat, je na spatncyh sektorech? pomuze tscrunch?
 - results ikony

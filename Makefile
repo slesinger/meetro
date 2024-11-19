@@ -26,6 +26,7 @@ video:
 
 scroller:
 	$(KICKASS) scroller.asm
+	$(KICKASS) planety_bmpdata.asm
 
 prgs: keyb fontm video scroller
 
@@ -40,6 +41,8 @@ disk: clean prgs
 	c1541 -attach $(D64_FILE) -write data/ucieczka.music music
 	c1541 -attach $(D64_FILE) -write video.prg video
 	c1541 -attach $(D64_FILE) -write scroller.prg scrll
+	c1541 -attach $(D64_FILE) -write planet_bitmap.prg pbtmp
+	c1541 -attach $(D64_FILE) -write planet_color.prg pcolr
 	c1541 -attach $(D64_FILE) -write data/video_font.bin vfont
 	c1541 -attach $(D64_FILE) -write data/search-font.bin rfont
 	c1541 -attach $(D64_FILE) -write data/results-text.bin restx
