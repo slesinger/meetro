@@ -139,15 +139,13 @@ wait_for_last_block_to_playback:
     lda screen_index
     cmp #13
     bne wait_for_last_block_to_playback
-
+    // video playback completed, continue
     sei
     lda #<irq2
     sta $0314
     lda #>irq2
     sta $0315
     cli
-end_of_video:
-    // background color is defined in $d800-$dbff as $0f. 0 is not important
     // fill $d800 with $0c color (GRAY)
     lda #$0c
     sta $d021
@@ -158,17 +156,19 @@ end_of_video:
     jsr fill_color
     // now video pixels are same color as background
     // clear $0400 and switch screen there
-    //TODO
     lda #$00
     sta $d020
     sta $d021
+    lda $d011
+    and #%11101111   // disable screen
+    sta $d011
     // load 3d scroller part with planets
     clc
-    ldx #<file_b  // Vector pointing to a string containing loaded file name
-    ldy #>file_b
+    ldx #<file_scroller  // Vector pointing to a string containing loaded file name
+    ldy #>file_scroller
     jsr loadraw
     bcs load_error2
-    jmp $8000 // TODO kde zacina kod?
+    jmp $9800  // execute next part
 
 load_error2:
     sta $0400  // display error screen code
@@ -183,9 +183,8 @@ loading_sempahore:  // 0: load next part of video, non-zero: wait
 file_b:   .text "BA"  //filename on diskette
           .byte $00
 file_scroller:
-          .text "scrll"  //filename on diskette
+          .text "SCRLL"  //filename on diskette
           .byte $00
-
 
 screen_index:  // moview screen, every FRAME_DELAY of frames
     .byte 0
@@ -372,6 +371,7 @@ skip_screen_update:
     rti
 
 irq2:
+    asl $d019  // ack irq
     jsr $1003
     jmp skip_screen_update
 
