@@ -88,7 +88,7 @@ cont1:
     clc
     ldx #<pbtmp  // Vector pointing to a string containing loaded file name
     ldy #>pbtmp
-    jsr loadraw
+    jsr loadcompd
     bcs load_error
     // load color data
     clc

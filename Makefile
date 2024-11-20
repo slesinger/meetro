@@ -54,7 +54,7 @@ disk: clean prgs
 	tools/tscrunch.py -i data/ucieczka.music data-compressed/ucieczka.music
 	tools/tscrunch.py -i video.prg video.prg
 	tools/tscrunch.py -i scroller.prg scroller.prg
-	# tools/tscrunch.py -i planet_bitmap.prg planet_bitmap.prg
+	tools/tscrunch.py -i planet_bitmap.prg planet_bitmap.prg
 	# tools/tscrunch.py -i planet_color.prg planet_color.prg
 	tools/tscrunch.py -i data/video_font.bin data-compressed/video_font.bin
 	tools/tscrunch.py -i data/search-font.bin data-compressed/search-font.bin

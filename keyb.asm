@@ -256,7 +256,7 @@ ai_mode: .byte SWITCH_TO_USER  // 1 - keyboard input, 2 - AI input
 t_error1:
     .encoding "screencode_upper"
     .text "TRACEBACK (MOST RECENT CALL LAST):"; .byte NL
-    .text @"  FILE \"MAIN.PY\" LINE 55"; .byte NL
+    .text @"  FILE \"MAIN.PY\" LINE 50"; .byte NL
     .text "HTTP EXCEPTION: HOST NOT FOUND"; .byte NL
     .text ">>> "
 t_conv1:
