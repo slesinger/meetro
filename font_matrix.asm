@@ -124,7 +124,6 @@ load_error:
     sta $0400  // display error screen code
     lda #$04
     sta $d020
-    sta $d021
     jmp *
 
 
@@ -394,7 +393,9 @@ exec_scroll_results_scroll:
     sta $dc00
     ldx $dc01
     cpx #$ff
-    bne !+
+    bne esr7_end  // paused, just exit
+    lda esr7_hard_scroll_flag
+    beq skip_corrupt_font
     // corrupt font
     lda seed
     beq doEor
@@ -410,27 +411,42 @@ noEor:
     sta seed_sta + 7
     inc seed_sta + 4
     inc seed_sta + 7
-    inc seed_sta + 7
     lda #$00 // clear a line in a character font
 seed_sta:
     sta $2000
     sta $2000
     sta $2000
+skip_corrupt_font:
     // hard vertical scroll
     jsr scroll_up
-    lda esr7_hard_scroll_counter
+    lda esr7_hard_scroll_counter  // $51ec
     cmp #$d0  // $ff minus after how many lines the scroll will speed up
     bne esr7a
     lda #$02
     sta speed_control + 1  // there is cmp there
 esr7a:
     dec esr7_hard_scroll_counter
-    bne !+
+    lda esr7_hard_scroll_counter
+esr7b:
+    cmp #50  // how many lines (256-x) to scroll up in first round, will get overwritten to 0 for second run
+    bne esr7_end
+    lda esr7_hard_scroll_flag
+    bne esr7_nextpart
+    inc esr7_hard_scroll_flag
+    lda #$00
+    sta esr7_hard_scroll_counter
+    sta esr7b + 1
+    sta copy_loop + 1
+    lda #$98
+    sta copy_loop + 2
+    jmp esr7_end
+esr7_nextpart:
     // end this part and execute Video part
     jmp $9300 // video.prg
-!:
+esr7_end:
     rts
 esr7_hard_scroll_counter: .byte 0  // how many times to scroll up and populate screen line 25. 0 mean 256 lines
+esr7_hard_scroll_flag: .byte 0  // 0: normal scroll, 1: corrupting font
 seed: .byte 24
 
 scroll_up:

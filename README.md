@@ -7,7 +7,6 @@ MIT License
 - postupne promazavat font ve vertikalnim partu - jak to vylepsit aby si mohli precist skvele texty
 
 ## Issues
-- napojit na video 3d scroller - predelat na irq
 - kde je fryba?
 - results ikony
 - pregenerovat nahodne velka pismena, schazi tam pravy sloupec
