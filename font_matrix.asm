@@ -88,7 +88,7 @@ lload_loop:
     sta what_to_load
     jmp lload_loop
 !:  cmp #$03
-    bne lload_loop
+    bne !+
     clc
     ldx #<file_video_code  // Vector pointing to a string containing loaded file name
     ldy #>file_video_code
@@ -102,8 +102,7 @@ lload_loop:
     clc
     ldx #<file_fryba  // Vector pointing to a string containing loaded file name
     ldy #>file_fryba
-    jsr loadraw
-    brk
+    jsr loadcompd
     bcs load_error
     lda #$00
     sta what_to_load

@@ -150,8 +150,8 @@ cont1:
 space:
     lda #$ef
     cmp $dc01 //space?
-    beq space
-    jmp space // TODO go to next part of course
+    bne space
+    brk // TODO go to next part of course
 
 irq2:
     asl $d019  // ack irq

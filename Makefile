@@ -76,7 +76,7 @@ disk: clean prgs
 	c1541 -attach $(D64_FILE) -write data-compressed/BL.bin bl
 	c1541 -attach $(D64_FILE) -write data-compressed/BM.bin bm
 	c1541 -attach $(D64_FILE) -write data-compressed/BN.bin bn
-	c1541 -attach $(D64_FILE) -write data/F5.bin f5
+	c1541 -attach $(D64_FILE) -write data-compressed/F5.bin f5
 	c1541 -attach $(D64_FILE) -write font_matrix.prg fontm
 	c1541 -attach $(D64_FILE) -write data-compressed/ucieczka.music music
 	c1541 -attach $(D64_FILE) -write video.prg video
