@@ -403,7 +403,7 @@ dos:
 //after init all data and proc. below can be erase
 //======================================================
 #if RUNNING_COMPLETE
-*= $9c00 "initgraph"
+*= $9d00 "initgraph"
 #else
 *= $c000 "initgraph"  // melo by byt od $9c00, ale koliduje to s bejzikem
 #endif 

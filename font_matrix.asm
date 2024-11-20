@@ -719,9 +719,9 @@ speed_control:
     lda #$00
     sta update_counter
 stage_jsr:
-    // jsr exec_update_bigchar  // later overriden to next phase of the program
+    jsr exec_update_bigchar  // later overriden to next phase of the program
     // jsr exec_show_search
-    jsr exec_scroll_results_setup
+    // jsr exec_scroll_results_setup
 end_irq:
     pla
     tay
