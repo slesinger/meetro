@@ -151,7 +151,7 @@ space:
     lda #$ef
     cmp $dc01 //space?
     bne space
-    brk // TODO go to next part of course
+    jmp dos // TODO go to next part of course
 
 irq2:
     asl $d019  // ack irq
@@ -396,6 +396,9 @@ cntrol:    .byte 0
 txtscrol:  .text "hondani meetro 2024   dan je guma honza je guma ondra je taky guma. vsichni jsme gumy    do not forget to give credits to wegi/bs/smr/ftm         "
           .byte 0
 //==============
+dos:
+#import "dos.asm"
+
 //======================================================
 //after init all data and proc. below can be erase
 //======================================================
