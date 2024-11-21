@@ -3,12 +3,8 @@
 MIT License
 
 ## Zkouknout
-- naloaduje se F5 z FM, tj pred jmp $9300?
-- postupne promazavat font ve vertikalnim partu - jak to vylepsit aby si mohli precist skvele texty
 
 ## Issues
-- kde je fryba?
-- results ikony
 - pregenerovat nahodne velka pismena, schazi tam pravy sloupec
 - vylepsit google font - pixel-detail
 - dir art
@@ -23,10 +19,30 @@ MIT License
 ### Build disk image
 /usr/bin/java -jar /home/honza/projects/c64/pc-tools/kickass/KickAss.jar build-floppy.asm
 
-
-
 -autostartprgmode 1 -autostart ${kickassembler:buildFilename} -moncommands ${kickassembler:viceSymbolsFilename}
 
+## Part 1 - Keyboard hack
+
+## Part 2 - Font matrix
+
+## Part 3 - Hondani search
+
+### First results screen
+
+`assets/results-text.src` - must be max 40 characters wide. Then, processed by `results-text.ipynb`.
+
+Will be popping up with delays, like a loading web page.
+
+Results font edited in https://petscii.krissz.hu. Select Chars from left menu. From main screen, select Export and then "Export to .64C file format". Rename to `search-font.bin`. Copy to `data` folder. Next, use `ghex` app to change first 2 bytes of the binary. The size of the file needs to be 205 then. Change them to $00 $20 in order to load the data to $2000.
+
+### Verical scroller
+
+
+## Part 4 - Video Milos Fryba & Navstevnici
+
+## Part 5 - Scroller
+
+## Part 6 - Goodbye
 
 ## Disk layout
 There will be following files visible on the disk
