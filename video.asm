@@ -372,6 +372,7 @@ skip_screen_update:
 
 irq2:
     asl $d019  // ack irq
+    nop  // TODO without this NOP it hangs at Fryba while loading BA
     jsr $1003
     jmp skip_screen_update
 
