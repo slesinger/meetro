@@ -1,8 +1,8 @@
 .PHONY: clean video scroller build-loader
 
 KICKASS = /usr/bin/java -jar /home/honza/projects/c64/pc-tools/kickass/KickAss.jar
-D64_FILE = meetro.d64
-
+D64_FILE = meetro-side-a.d64
+D64_FILEB = meetro-side-b.d64
 clean:
 	rm -f *.dbg *.prg *.sym *.vs .source.txt chunk.tmp *.vsf meetro.din $(D64_FILE)
 	rm -rf data-compressed
@@ -60,7 +60,7 @@ disk: clean prgs
 	tools/tscrunch.py -i data/search-font.bin data-compressed/search-font.bin
 	tools/tscrunch.py -i data/results-text.bin data-compressed/results-text.bin
 	tools/tscrunch.py -i data/results-vert.bin data-compressed/results-vert.bin
-	c1541 -format ' - hondani - ,2024' d64 $(D64_FILE)
+	c1541 -format " - hondani - ,'24 A" d64 $(D64_FILE)
 	c1541 -attach $(D64_FILE) -write keyb.prg 'the demo'
 	c1541 -attach $(D64_FILE) -write data-compressed/BA.bin ba
 	c1541 -attach $(D64_FILE) -write data-compressed/BB.bin bb
@@ -87,3 +87,60 @@ disk: clean prgs
 	c1541 -attach $(D64_FILE) -write data-compressed/search-font.bin rfont
 	c1541 -attach $(D64_FILE) -write data-compressed/results-text.bin restx
 	c1541 -attach $(D64_FILE) -write data-compressed/results-vert.bin vertx
+
+diskb: clean
+	rm -f $(D64_FILEB)
+	mkdir -p datab-compressed
+	tools/tscrunch.py -i data/ucieczka.music datab-compressed/ucieczka.music
+	tools/tscrunch.py -i datab/A0.bin datab-compressed/A0.bin
+	tools/tscrunch.py -i datab/A1.bin datab-compressed/A1.bin
+	tools/tscrunch.py -i datab/A2.bin datab-compressed/A2.bin
+	tools/tscrunch.py -i datab/A3.bin datab-compressed/A3.bin
+	tools/tscrunch.py -i datab/A4.bin datab-compressed/A4.bin
+	tools/tscrunch.py -i datab/B0.bin datab-compressed/B0.bin
+	tools/tscrunch.py -i datab/B1.bin datab-compressed/B1.bin
+	tools/tscrunch.py -i datab/B2.bin datab-compressed/B2.bin
+	tools/tscrunch.py -i datab/B3.bin datab-compressed/B3.bin
+	tools/tscrunch.py -i datab/B4.bin datab-compressed/B4.bin
+	tools/tscrunch.py -i datab/C0.bin datab-compressed/C0.bin	
+	tools/tscrunch.py -i datab/C1.bin datab-compressed/C1.bin
+	tools/tscrunch.py -i datab/C2.bin datab-compressed/C2.bin
+	tools/tscrunch.py -i datab/C3.bin datab-compressed/C3.bin
+	tools/tscrunch.py -i datab/C4.bin datab-compressed/C4.bin
+	tools/tscrunch.py -i datab/D0.bin datab-compressed/D0.bin
+	tools/tscrunch.py -i datab/D1.bin datab-compressed/D1.bin
+	tools/tscrunch.py -i datab/D2.bin datab-compressed/D2.bin
+	tools/tscrunch.py -i datab/D3.bin datab-compressed/D3.bin
+	tools/tscrunch.py -i datab/D4.bin datab-compressed/D4.bin
+	tools/tscrunch.py -i datab/E0.bin datab-compressed/E0.bin
+	tools/tscrunch.py -i datab/E1.bin datab-compressed/E1.bin
+	tools/tscrunch.py -i datab/E2.bin datab-compressed/E2.bin
+	tools/tscrunch.py -i datab/E3.bin datab-compressed/E3.bin
+	tools/tscrunch.py -i datab/E4.bin datab-compressed/E4.bin
+	c1541 -format " - hondani - ,'24 B" d64 $(D64_FILEB)
+	c1541 -attach $(D64_FILEB) -write datab-compressed/ucieczka.music music
+	c1541 -attach $(D64_FILEB) -write datab-compressed/A0.bin a0
+	c1541 -attach $(D64_FILEB) -write datab-compressed/A1.bin a1
+	c1541 -attach $(D64_FILEB) -write datab-compressed/A2.bin a2
+	c1541 -attach $(D64_FILEB) -write datab-compressed/A3.bin a3
+	c1541 -attach $(D64_FILEB) -write datab-compressed/A4.bin a4
+	c1541 -attach $(D64_FILEB) -write datab-compressed/B0.bin b0
+	c1541 -attach $(D64_FILEB) -write datab-compressed/B1.bin b1
+	c1541 -attach $(D64_FILEB) -write datab-compressed/B2.bin b2
+	c1541 -attach $(D64_FILEB) -write datab-compressed/B3.bin b3
+	c1541 -attach $(D64_FILEB) -write datab-compressed/B4.bin b4
+	c1541 -attach $(D64_FILEB) -write datab-compressed/C0.bin c0
+	c1541 -attach $(D64_FILEB) -write datab-compressed/C1.bin c1
+	c1541 -attach $(D64_FILEB) -write datab-compressed/C2.bin c2
+	c1541 -attach $(D64_FILEB) -write datab-compressed/C3.bin c3
+	c1541 -attach $(D64_FILEB) -write datab-compressed/C4.bin c4
+	c1541 -attach $(D64_FILEB) -write datab-compressed/D0.bin d0
+	c1541 -attach $(D64_FILEB) -write datab-compressed/D1.bin d1
+	c1541 -attach $(D64_FILEB) -write datab-compressed/D2.bin d2
+	c1541 -attach $(D64_FILEB) -write datab-compressed/D3.bin d3
+	c1541 -attach $(D64_FILEB) -write datab-compressed/D4.bin d4
+	c1541 -attach $(D64_FILEB) -write datab-compressed/E0.bin e0
+	c1541 -attach $(D64_FILEB) -write datab-compressed/E1.bin e1
+	c1541 -attach $(D64_FILEB) -write datab-compressed/E2.bin e2
+	c1541 -attach $(D64_FILEB) -write datab-compressed/E3.bin e3
+	c1541 -attach $(D64_FILEB) -write datab-compressed/E4.bin e4

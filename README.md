@@ -2,17 +2,44 @@
 
 MIT License
 
+Credits Part 6 font: WTE
+
 ## Zkouknout
 
 ## Issues
-- pregenerovat nahodne velka pismena, schazi tam pravy sloupec
+- greetz
 - vylepsit google font - pixel-detail
 - dir art
+- dlouhe video s titulky pro loadovani
 
+### Greetigs
+topaz boozeline
+success
+epic
+ghoul
+trance
+cartel   zdravime pinu
+control
+hysteric
+the force
+jam
+trinomic
+rebels
+enduro
+explora
+death
+the cult
+sao
+blaze
+origo
+asphyxia
+vagabonds
+astral
+special hi to tommi salo
 
-### Nice to have
-- loader by mel umet switchovat banky
-- fryba by mohl mit font optimalizovany pro sebe. Mozna to nebude velky rozdil.
+honza   -main coder         
+dan     -writer,little coder                           
+artcore -little gfx       
 
 ## Build process
 
@@ -25,6 +52,8 @@ MIT License
 
 ## Part 2 - Font matrix
 
+`update_timeline.ipynb` generates long code in fm_lookups.asm. Take output and paste it to `fm_lookups` on line 106-361.
+
 ## Part 3 - Hondani search
 
 ### First results screen
@@ -33,7 +62,7 @@ MIT License
 
 Will be popping up with delays, like a loading web page.
 
-Results font edited in https://petscii.krissz.hu. Select Chars from left menu. From main screen, select Export and then "Export to .64C file format". Rename to `search-font.bin`. Copy to `data` folder. Next, use `ghex` app to change first 2 bytes of the binary. The size of the file needs to be 205 then. Change them to $00 $20 in order to load the data to $2000.
+Results font edited in https://petscii.krissz.hu. Select Chars from left menu. From main screen, select Export and then "Export to .64C file format". Rename to `search-font.bin`. Copy to `data` folder. Next, use `ghex` app to change first 2 bytes of the binary. The size of the file needs to be 2048 then. Change them to $00 $20 in order to load the data to $2000.
 
 ### Verical scroller
 
@@ -42,7 +71,36 @@ Results font edited in https://petscii.krissz.hu. Select Chars from left menu. F
 
 ## Part 5 - Scroller
 
-## Part 6 - Goodbye
+## Part 6 - Video Bond
+
+1. Open with KDEnLive
+2. Project > Project settings > Custom 15fps 320x200
+3. Effects > Saturation = 0
+4. Project > Render > Image Sequence > GIF
+
+Continue with video-bond.ipynb
+
+Continue with hires-to-font.ipynb, as last cell use the Bond one for saving c64 files.
+
+Rename to `bond-font.bin`. Copy to `datab` folder. Next, use `ghex` app to insert 2 bytes to the binary. The size of the file needs to be 2050 then. Change them to $00 $40 in order to load the data to $4000.
+
+Video (26seconds) has 5 parts, 5.5 sec each. Each part has 37 frames. Next video part is loaded during title screen. 6 title screens in total.
+
+Title font starts at $8800 and only uses first $0400 bytes (128 chars) because screen for titles starts at $8c00. Font is using big chars 2x2 charset.
+
+The part will start with screen off, loading part 1 video.
+
+Then loop:
+
+  - play video till end frame
+  - display title screen
+    - copy end screen to 8c00
+    - copy titles somewhere to $8c00-$8fe8
+    - split screen in IRQ to make a raster as top bar line and switch to font at $8800
+    - set next irq to make a raster as bottom bar line and switch to font at $8000
+  - load next video part
+  
+## Part 7 - Goodbye
 
 ## Disk layout
 There will be following files visible on the disk
