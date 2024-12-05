@@ -138,23 +138,28 @@ file_video:
     .text "A0"  //filename on diskette
     .byte $00
 
+
 irq0:
     asl $d019  // ack irq
-
-irq1:
-    asl $d019  // ack irq
+    jsr $1003
     // check is semaphore allows displaying
     lda semaphore
     cmp #$01      // is displaying
-    bne title_top  // is loading and title is displayed
+    bne title_top_set  // is loading and title is displayed
     // Count down to next frame
       // decrease frame_index by 1, check if it is zero. 
       // If zero continue to frame update, else skip frame update
     dec frame_index
     lda frame_index
     beq !+
-    jmp irq1_end
+    jmp irq_end
 !:
+    lda #10  // where raster interrupt will be triggered
+    sta $d012
+    lda #<irq0
+    sta $0314
+    lda #>irq0
+    sta $0315
     // Screen update
     lda #FRAME_DELAY
     sta frame_index  // reset delay counter
@@ -169,15 +174,23 @@ irq1:
     inc screen_index
     lda screen_index
     cmp #37  // number of frames in memory in total
-    bne irq1_end
-    lda #0  // Start video over
+    bne irq_end
+    lda #0  // Start video over again
     sta screen_index
     sta semaphore
     jsr copy_title
-    // jmp irq1_end  // make sure that title will render nice since next frame will be displayed
+title_top_set:
+    lda #TOP_D012  // where raster interrupt will be triggered
+    sta $d012
+    lda #<irq1
+    sta $0314
+    lda #>irq1
+    sta $0315
+    jmp irq_end
 
-title_top:
-    wait(2)
+irq1:
+    asl $d019  // ack irq
+    wait(4)
     lda #TITLE_FONT6_SCREEN_D018
     sta $d018
     lda #TITLE_BANK_DD00
@@ -198,9 +211,7 @@ title_top:
     lda #>irq2
     sta $0315
 
-irq1_end:
-    jsr $1003
-irq2_end:
+irq_end:
     pla
     tay
     pla
@@ -213,7 +224,7 @@ irq2:
     wait(2)
     nop
     nop
-    lda #YELLOW
+    lda #WHITE
     sta $d020
     sta $d021
     wait(9)
@@ -222,13 +233,13 @@ irq2:
     lda #BLACK
     sta $d020
     sta $d021
-    lda #TOP_D012  // where top bar raster interrupt will be triggered
+    lda #10  // where top bar raster interrupt will be triggered
     sta $d012
-    lda #<irq1
+    lda #<irq0
     sta $0314
-    lda #>irq1
+    lda #>irq0
     sta $0315
-    jmp irq2_end
+    jmp irq_end
 
 semaphore:  // 0: loading only, 1: displaying,
     .byte 0
