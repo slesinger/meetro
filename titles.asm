@@ -17,8 +17,9 @@ Video files on diskete will be named as <1 letter sequence code for video part><
 .const TITLE_FONT6_SCREEN_D018 = $32  // $8800-$9000
 .const TITLE_FONT_SCREEN_D018 = $30  // $8800-$9000
 .const TITLE_BANK_DD00 = $01  // $8c00-$8fe8
-.const TOP_D012 = $a2 // where top bar raster interrupt will be triggered
-.const BOTTOM_D012 = $d7 // where bottom bar raster interrupt will be triggered
+.const TOP_D012 = $a1 // where top bar raster interrupt will be triggered
+.const BOTTOM_D012 = $d8 // where bottom bar raster interrupt will be triggered
+.const FONT_BLANK_CHAR = $0a  // find character in bond-font.bin that is all white
 
 
 #if RUNNING_COMPLETE
@@ -34,7 +35,7 @@ Video files on diskete will be named as <1 letter sequence code for video part><
     loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
 
     *= $4000 "font" // same as loader code block address
-    .var font = LoadBinary("datab/bond-font.bin", BF_C64FILE)
+    .var font = LoadBinary("datab/bubny-font.bin", BF_C64FILE)
     font_ptr: .fill font.getSize(), font.get(i)
 
     *= $8800 "font6" // same as loader code block address
@@ -137,6 +138,9 @@ file_video:
     .text "A0"  //filename on diskette
     .byte $00
 
+irq0:
+    asl $d019  // ack irq
+
 irq1:
     asl $d019  // ack irq
     // check is semaphore allows displaying
@@ -173,15 +177,17 @@ irq1:
     // jmp irq1_end  // make sure that title will render nice since next frame will be displayed
 
 title_top:
-    wait(5)
-    lda #WHITE
-    sta $d020
-    sta $d021
+    wait(2)
     lda #TITLE_FONT6_SCREEN_D018
     sta $d018
     lda #TITLE_BANK_DD00
     sta $dd00
-    wait(8)
+    nop
+    lda #WHITE
+    sta $d020
+    sta $d021
+    wait(10)
+    nop
     lda #BLACK
     sta $d020
     sta $d021
@@ -204,13 +210,15 @@ irq2_end:
 
 irq2:
     asl $d019  // ack irq
-    wait(3)
+    wait(2)
+    nop
+    nop
     lda #YELLOW
     sta $d020
     sta $d021
+    wait(9)
     lda #TITLE_FONT_SCREEN_D018
     sta $d018
-    wait(9)
     lda #BLACK
     sta $d020
     sta $d021
@@ -434,7 +442,7 @@ copy_a000_to_e000:
 
 empty_title:
     ldx #$00
-    lda #$06
+    lda #FONT_BLANK_CHAR
 !:
     sta $8c00, x
     sta $8d00, x
@@ -447,7 +455,7 @@ empty_title:
     bne !-
     ldx #$a0
 !:
-    sta $8f48, x
+    sta $8f47, x
     dex
     bne !-
     jmp copy_title_only
