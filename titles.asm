@@ -19,7 +19,7 @@ Video files on diskete will be named as <1 letter sequence code for video part><
 .const TITLE_BANK_DD00 = $01  // $8c00-$8fe8
 .const TOP_D012 = $a1 // where top bar raster interrupt will be triggered
 .const BOTTOM_D012 = $d8 // where bottom bar raster interrupt will be triggered
-.const FONT_BLANK_CHAR = $0a  // find character in bond-font.bin that is all white
+.const FONT_BLANK_CHAR = $03  // find character in bond-font.bin that is all white
 
 
 #if RUNNING_COMPLETE
@@ -35,7 +35,7 @@ Video files on diskete will be named as <1 letter sequence code for video part><
     loader_ptr: .fill loader_c64.getSize(), loader_c64.get(i)
 
     *= $4000 "font" // same as loader code block address
-    .var font = LoadBinary("datab/bubny-font.bin", BF_C64FILE)
+    .var font = LoadBinary("datab/vidfont.bin", BF_C64FILE)
     font_ptr: .fill font.getSize(), font.get(i)
 
     *= $8800 "font6" // same as loader code block address
@@ -46,20 +46,24 @@ Video files on diskete will be named as <1 letter sequence code for video part><
         .text "MUSIC"  //filename on diskette
         .byte $00
 #endif 
-    
+
+
 *= $9300 "Part6_code"
 start:
 #if RUNNING_COMPLETE
     // Started as whole compilation of parts
 #else
     jsr install
-    // bcs load_error
+    bcc !+
+    jmp dos
+!:
     clc
     ldx #<file_music  // Vector pointing to a string containing loaded file name
     ldy #>file_music
     jsr loadcompd
-    // bcs load_error
-
+    bcc !+
+    jmp dos
+!:
     // init music
     jsr $1000
 #endif 
@@ -128,11 +132,11 @@ load_loop:
     jmp load_loop  // display next video part
 
 load_error:
-    sta $0400  // display error screen code
-    lda #$05  // TODO sem to skace pred uderem loktu do hlavy
-    sta $d020
-    sta $d021
-    jmp *
+    // sta $0400  // display error screen code
+    // lda #$05  // TODO sem to skace pred uderem loktu do hlavy
+    // sta $d020
+    // sta $d021
+    jmp dos
 
 file_video:
     .text "A0"  //filename on diskette
@@ -142,7 +146,7 @@ file_video:
 irq0:
     asl $d019  // ack irq
     jsr $1003
-    // check is semaphore allows displaying
+    // check if semaphore allows displaying
     lda semaphore
     cmp #$01      // is displaying
     bne title_top_set  // is loading and title is displayed
@@ -551,4 +555,8 @@ copy_title_only:
     cpy #$28
     bne !-
     rts
+
+dos:
+#import "dos.asm"
+
 }
