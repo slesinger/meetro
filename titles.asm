@@ -133,23 +133,132 @@ load_loop:
 
 load_error:
     // sta $0400  // display error screen code
-    // lda #$05  // TODO sem to skace pred uderem loktu do hlavy
+    // lda #$05
     // sta $d020
     // sta $d021
-    jmp dos
+    lda #$10  // ending
+    sta semaphore
+    jmp *  // instead of debug code, initiate ending procedure
 
 file_video:
     .text "A0"  //filename on diskette
     .byte $00
 
-
+ending_counter: .byte 255
+volume: .byte $0f
 irq0:
     asl $d019  // ack irq
     jsr $1003
+    // set volume
+    lda volume
+    and #$0f
+    ora #$30
+    sta $d418
     // check if semaphore allows displaying
     lda semaphore
     cmp #$01      // is displaying
-    bne title_top_set  // is loading and title is displayed
+    bne !+  // is loading and title is displayed
+    jmp displaying
+!:  cmp #$10      // is ending
+    beq ending  // video finished and start darking the screen
+    jmp title_top_set
+ending:
+    dec ending_counter
+    // decrease sound volume by 1 every 16 frames
+    lda ending_counter
+    and #$0f
+    cmp #$00
+    bne !+
+    dec volume  // decrease volume
+!:
+    lda ending_counter
+    cmp #254
+    bne !+
+    lda #$f0
+    sta $d018
+    jmp irq_end
+!:  cmp #$f0
+    bne !+
+    lda #$00
+    sta end_block_addr + 1
+    lda #$d8
+    sta end_block_addr + 2
+    pha
+    lda #DARK_GRAY
+    jsr end_block_fill
+    pla
+!:  cmp #$d0
+    bne !+
+    pha
+    lda #BLACK
+    jsr end_block_fill
+    pla
+!:
+    cmp #$b0
+    bne !+
+    lda #$f0
+    sta end_block_addr + 1
+    lda #$d8
+    sta end_block_addr + 2
+    pha
+    lda #DARK_GRAY
+    jsr end_block_fill
+    pla
+!:  cmp #$90
+    bne !+
+    pha
+    lda #BLACK
+    jsr end_block_fill
+    pla
+!:
+    cmp #$70
+    bne !+
+    lda #$e0
+    sta end_block_addr + 1
+    lda #$d9
+    sta end_block_addr + 2
+    pha
+    lda #DARK_GRAY
+    jsr end_block_fill
+    pla
+!:  cmp #$50
+    bne !+
+    pha
+    lda #BLACK
+    jsr end_block_fill
+    pla
+!:
+    cmp #$30
+    bne !+
+    lda #$d0
+    sta end_block_addr + 1
+    lda #$da
+    sta end_block_addr + 2
+    pha
+    lda #DARK_GRAY
+    jsr end_block_fill
+    pla
+!:
+    cmp #$10
+    bne !+
+    pha
+    lda #BLACK
+    jsr end_block_fill
+    pla
+!:
+    cmp #16
+    bne !+
+    ldx #BLUE
+    stx $d020
+!:  cmp #8  // set border color as prequel to ending
+    bne !+
+    ldx #LIGHT_BLUE
+    stx $d020
+!:  cmp #$00
+    beq !+
+    jmp irq_end
+!:  jmp dos
+displaying:
     // Count down to next frame
       // decrease frame_index by 1, check if it is zero. 
       // If zero continue to frame update, else skip frame update
@@ -556,6 +665,16 @@ copy_title_only:
     bne !-
     rts
 
+// Fill block of memory with color
+// A - color
+end_block_fill:
+    ldx #$00
+end_block_addr:
+    sta $d800, x
+    inx
+    cpx #40 * 6
+    bne end_block_addr
+    rts
 dos:
 #import "dos.asm"
 

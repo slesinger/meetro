@@ -4,7 +4,7 @@ KICKASS = /usr/bin/java -jar /home/honza/projects/c64/pc-tools/kickass/KickAss.j
 D64_FILE = meetro-side-a.d64
 D64_FILEB = meetro-side-b.d64
 clean:
-	rm -f *.dbg *.prg *.sym *.vs .source.txt chunk.tmp *.vsf meetro.din $(D64_FILE)
+	rm -f *.dbg *.prg *.sym *.vs .source.txt chunk.tmp *.vsf meetro.din
 	rm -rf data-compressed
 
 build-loader:
@@ -29,9 +29,14 @@ scroller:
 	$(KICKASS) scroller.asm
 	$(KICKASS) planety_bmpdata.asm
 
+titles:
+	$(KICKASS) titles.asm
+
 prgs: keyb fontm video scroller
 
-disk: clean prgs
+prgsb: titles
+
+diska: clean prgs
 	rm -f $(D64_FILE)
 	mkdir -p data-compressed
 	tools/tscrunch.py -p -x 0810 keyb.prg keyb.prg
@@ -88,10 +93,13 @@ disk: clean prgs
 	c1541 -attach $(D64_FILE) -write data-compressed/results-text.bin restx
 	c1541 -attach $(D64_FILE) -write data-compressed/results-vert.bin vertx
 
-diskb: clean
+diskb: clean prgsb
 	rm -f $(D64_FILEB)
 	mkdir -p datab-compressed
 	tools/tscrunch.py -i data/ucieczka.music datab-compressed/ucieczka.music
+	tools/tscrunch.py -i titles.prg titles.prg
+	tools/tscrunch.py -i datab/vidfont.bin datab-compressed/VF.bin
+	tools/tscrunch.py -i datab/font6.bin datab-compressed/F6.bin
 	tools/tscrunch.py -i datab/A0.bin datab-compressed/A0.bin
 	tools/tscrunch.py -i datab/A1.bin datab-compressed/A1.bin
 	tools/tscrunch.py -i datab/A2.bin datab-compressed/A2.bin
@@ -119,6 +127,9 @@ diskb: clean
 	tools/tscrunch.py -i datab/E4.bin datab-compressed/E4.bin
 	c1541 -format " - hondani - ,'24 B" d64 $(D64_FILEB)
 	c1541 -attach $(D64_FILEB) -write datab-compressed/ucieczka.music music
+	c1541 -attach $(D64_FILEB) -write titles.prg titles
+	c1541 -attach $(D64_FILEB) -write datab-compressed/VF.bin vf
+	c1541 -attach $(D64_FILEB) -write datab-compressed/F6.bin f6
 	c1541 -attach $(D64_FILEB) -write datab-compressed/A0.bin a0
 	c1541 -attach $(D64_FILEB) -write datab-compressed/A1.bin a1
 	c1541 -attach $(D64_FILEB) -write datab-compressed/A2.bin a2
