@@ -57,7 +57,7 @@
     BasicUpstart2(start)
 #endif
 //---
-*= $9800 "Part5_code"
+*= $9b00 "Part5_code" //9b00  9800
 start:
 #if RUNNING_COMPLETE
 #else
@@ -103,8 +103,8 @@ cont1:
     ldy #0
     lda #0
     jsr $1000
-    // lda #$36
-    // sta $01
+    lda #$36
+    sta $01
 #endif 
     // set colors
     lda #BLACK  // black large empty space
@@ -147,14 +147,57 @@ cont1:
     cli
 
     // monitor space key
-space:
+retry_detect_sideb:
+    // check space key is pressed
     lda #$ef
     cmp $dc01 //space?
-    bne space
-    jmp dos // TODO go to next part of course
+    beq show_space
+
+    // check if disk is turned
+    clc
+    ldx #<file_sideb
+    ldy #>file_sideb
+    jsr fileexists
+    bcs retry_detect_sideb  // branch on file not found or error
+    // file exists > disk is turned, continue with next part
+    sei
+    lda #<irq0
+    sta $0314
+    lda #>irq0
+    sta $0315
+    cli
+    clc
+    ldx #<file_vidfont  // Vector pointing to a string containing loaded file name
+    ldy #>file_vidfont
+    jsr loadcompd
+    bcc !+
+    jmp load_error
+!:  clc
+    ldx #<file_font6
+    ldy #>file_font6
+    jsr loadcompd
+    bcc !+
+    jmp load_error
+!:  clc
+    ldx #<file_titles
+    ldy #>file_titles
+    jsr loadcompd
+    bcc !+
+    jmp load_error
+!:  
+    jmp $9300  // jump to next part titles
+
+show_space:
+    // set hires screen to different bank
+    jmp retry_detect_sideb
+
+irq0:
+    asl $d019
+    jsr $1003
+    jmp irq2_end
 
 irq2:
-    asl $d019  // ack irq
+    asl $d019   // ack irq
     jsr rolchar //shift data for dot scroll
     jsr speedclear //clear plots on the bitmap
     jsr speedcode  //display plots of chars on 3d trajectory
@@ -167,6 +210,18 @@ irq2_end:
     tax
     pla
     rti
+file_sideb:
+    .text "C0"  // filename on side b
+    .byte $00
+file_vidfont:
+    .text "VF"  // font for video
+    .byte $00
+file_font6:
+    .text "F6"  // font for titles
+    .byte $00
+file_titles:
+    .text "TI"  // font for titles
+    .byte $00
 
 
 //==============
@@ -391,20 +446,20 @@ myscrol:
 
 
 //==============
-posscroll:  .byte 0
+posscroll: .byte 0
 cntrol:    .byte 0
 txtscrol:  .text "hondani meetro 2024   dan je guma honza je guma ondra je taky guma. vsichni jsme gumy    do not forget to give credits to wegi/bs/smr/ftm         "
-          .byte 0
+           .byte 0
 //==============
 
 //======================================================
 //after init all data and proc. below can be erase
 //======================================================
-#if RUNNING_COMPLETE
-*= $9d00 "initgraph"
-#else
-*= $c000 "initgraph"  // melo by byt od $9c00, ale koliduje to s bejzikem
-#endif 
+// #if RUNNING_COMPLETE
+*= $9e00 "initgraph"  //9e00
+// #else
+// *= $c000 "initgraph"  // melo by byt od $9c00, ale koliduje to s bejzikem
+// #endif 
 
 initgraph:
 //==============
