@@ -15,11 +15,12 @@
 .namespace PART5_ns {
 #import "fm_const.asm"
 #import "loadersymbols-c64.inc"
+#import "cml_bmpdata.asm"
 //--------
 .const countlines = 8 //8 lines in char
 .const countchar = 16 //16 chars to shift
 .const lenloop = $62  //length loop for speedcode iteration
-
+.const CHECK_DISK_TURN_EVERY_JIFFY = 32
 
 .const storeplot = $04  //4 vector for store misc data
 .const vectr1    = $06
@@ -57,7 +58,7 @@
     BasicUpstart2(start)
 #endif
 //---
-*= $9b00 "Part5_code" //9b00  9800
+*= $9b00 "Part5_code"
 start:
 #if RUNNING_COMPLETE
 #else
@@ -84,6 +85,27 @@ load_error:
     jmp *
 
 cont1:
+    // copy CML to $e000
+    ldy #$00
+loop01:
+    ldx #$00
+loop02:
+    lda $4000,x
+loop03:
+    sta $e000,x
+    inx
+    bne loop02
+    inc loop02+2
+    inc loop03+2
+    iny
+    cpy #$1f
+    bne loop01
+!:  ldx #$00
+!:  lda $5f00,x
+    sta $ff00,x
+    inx
+    cpx #$40
+    bne !-
     // load bitmap
     clc
     ldx #<pbtmp  // Vector pointing to a string containing loaded file name
@@ -95,7 +117,9 @@ cont1:
     ldx #<pcolr  // Vector pointing to a string containing loaded file name
     ldy #>pcolr
     jsr loadraw
-    bcs load_error
+    bcc !+
+    jmp load_error
+!:
 #if RUNNING_COMPLETE
 #else
     // start music
@@ -148,17 +172,21 @@ cont1:
 
     // monitor space key
 retry_detect_sideb:
-    // check space key is pressed
     lda #$ef
     cmp $dc01 //space?
     beq show_space
+    // jmp retry_detect_sideb
 
     // check if disk is turned
+    lda my_jiffy_clock
+    bne hide_space
+    lda #CHECK_DISK_TURN_EVERY_JIFFY
+    sta my_jiffy_clock
     clc
     ldx #<file_sideb
     ldy #>file_sideb
-    jsr fileexists
-    bcs retry_detect_sideb  // branch on file not found or error
+    // jsr fileexists
+    jmp retry_detect_sideb  // branch on file not found or error, bcs
     // file exists > disk is turned, continue with next part
     sei
     lda #<irq0
@@ -188,9 +216,39 @@ retry_detect_sideb:
     jmp $9300  // jump to next part titles
 
 show_space:
-    // set hires screen to different bank
+    // set hires screen to $8000
+    lda #$00
+    sta $dd00
+    lda $d018
+    ora #$08  // $e000-$ffe7 bitmap data
+    sta $d018
+    lda $d016
+    ora #$10  // multicolor bitmap
+    sta $d016
+    ldx #$00
+ssp1:
+    lda $c000,x
+    sta $d800,x
+    lda $c100,x
+    sta $d900,x
+    lda $c200,x
+    sta $da00,x
+    lda $c2e7,x
+    sta $dae7,x
+    inx
+    bne ssp1
+    jmp retry_detect_sideb
+hide_space:
+    // set hires screen to $8000
+    lda #$03
+    sta $dd00
+    lda #$18  // bitmap data
+    sta $d018
+    lda #$c8  // hires bitmap
+    sta $d016
     jmp retry_detect_sideb
 
+my_jiffy_clock: .byte 0
 irq0:
     asl $d019
     jsr $1003
@@ -203,7 +261,9 @@ irq2:
     jsr speedcode  //display plots of chars on 3d trajectory
     // play music
     jsr $1003
+    
 irq2_end:
+    dec my_jiffy_clock
     pla
     tay
     pla
@@ -449,14 +509,14 @@ myscrol:
 posscroll: .byte 0
 cntrol:    .byte 0
 txtscrol:  .text "hondani meetro 2024   dan je guma honza je guma ondra je taky guma. vsichni jsme gumy    do not forget to give credits to wegi/bs/smr/ftm         "
-           .byte 0
+          .byte 0
 //==============
 
 //======================================================
 //after init all data and proc. below can be erase
 //======================================================
 // #if RUNNING_COMPLETE
-*= $9e00 "initgraph"  //9e00
+*= $a000 "initgraph"
 // #else
 // *= $c000 "initgraph"  // melo by byt od $9c00, ale koliduje to s bejzikem
 // #endif 

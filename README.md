@@ -44,7 +44,13 @@ artcore -little gfx
 ## Build process
 
 ### Build disk image
-/usr/bin/java -jar /home/honza/projects/c64/pc-tools/kickass/KickAss.jar build-floppy.asm
+
+```
+make diska
+make diskb
+```
+
+Directory design has to be done as last.
 
 -autostartprgmode 1 -autostart ${kickassembler:buildFilename} -moncommands ${kickassembler:viceSymbolsFilename}
 

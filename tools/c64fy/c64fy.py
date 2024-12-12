@@ -792,7 +792,7 @@ else:
     dfl += '\n\n//' + os.path.basename(inputbasefilename) + '_bitmapdata:\n'
     dfl += dumpbytes(bitmapbytes)
     dfl += '\n\n' + os.path.basename(inputbasefilename) + '_chardata:\n'
-    dfl += dumpbytes_swapped(chardata)
+    dfl += dumpbytes(chardata)
     if not hiresmode:
         dfl += '\n\n' + os.path.basename(inputbasefilename) + '_colordata:\n'
         dfl += dumpbytes(colordata)
