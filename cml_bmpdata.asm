@@ -1,4 +1,4 @@
-#importonce
+.segment CML_BITMAP []
 *=$4000 "cml_bitmapdata"
 cml_bitmapdata:
 .byte $55, $55, $95, $95, $95, $95, $95, $55, $55, $55, $55, $55, $55, $55, $55, $55
@@ -502,6 +502,7 @@ cml_bitmapdata:
 .byte $59, $55, $55, $65, $55, $a5, $97, $5c, $d1, $b1, $b1, $91, $d1, $41, $05, $15
 .byte $d5, $95, $95, $d5, $b5, $a5, $a5, $ad, $56, $75, $55, $55, $55, $55, $55, $69
 
+.segment CML_COLOR []
 *=$c400 "cml_screen"
 cml_chardata:
 .byte $3c, $31, $31, $31, $31, $35, $53, $d1, $d3, $36, $b3, $6b, $b1, $3b, $3d, $61
@@ -633,3 +634,6 @@ cml_colordata:
 .byte $01, $01, $0d, $01, $0d, $05, $05, $03, $03, $01, $02, $02, $02, $02, $01, $02
 .byte $02, $02, $01, $0f, $0f, $03, $0f, $01, $01, $01, $02, $01, $01, $01, $02, $02
 .byte $01, $01, $01, $01, $0b, $05, $05, $05
+
+.file [name="cml_bitmap.prg", segments="CML_BITMAP"]
+.file [name="cml_color.prg", segments="CML_COLOR"]

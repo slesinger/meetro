@@ -28,6 +28,7 @@ video:
 scroller:
 	$(KICKASS) scroller.asm
 	$(KICKASS) planety_bmpdata.asm
+	$(KICKASS) cml_bmpdata.asm
 
 titles:
 	$(KICKASS) titles.asm
@@ -61,6 +62,8 @@ diska: clean prgs
 	tools/tscrunch.py -i scroller.prg scroller.prg
 	tools/tscrunch.py -i planet_bitmap.prg planet_bitmap.prg
 	# tools/tscrunch.py -i planet_color.prg planet_color.prg
+	tools/tscrunch.py -i cml_bitmap.prg cml_bitmap.prg
+	tools/tscrunch.py -i cml_color.prg cml_color.prg
 	tools/tscrunch.py -i data/video_font.bin data-compressed/video_font.bin
 	tools/tscrunch.py -i data/search-font.bin data-compressed/search-font.bin
 	tools/tscrunch.py -i data/results-text.bin data-compressed/results-text.bin
@@ -88,6 +91,8 @@ diska: clean prgs
 	c1541 -attach $(D64_FILE) -write scroller.prg scrll
 	c1541 -attach $(D64_FILE) -write planet_bitmap.prg pbtmp
 	c1541 -attach $(D64_FILE) -write planet_color.prg pcolr
+	c1541 -attach $(D64_FILE) -write cml_bitmap.prg cbtmp
+	c1541 -attach $(D64_FILE) -write cml_color.prg ccolr
 	c1541 -attach $(D64_FILE) -write data-compressed/video_font.bin vfont
 	c1541 -attach $(D64_FILE) -write data-compressed/search-font.bin rfont
 	c1541 -attach $(D64_FILE) -write data-compressed/results-text.bin restx

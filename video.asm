@@ -48,7 +48,7 @@ start:
         clc
         ldx #<file_f5  // Vector pointing to a string containing loaded file name
         ldy #>file_f5
-        jsr loadraw  // TODO loadcompd
+        jsr loadcompd  // TODO loadcompd loadraw
         bcs load_error
         clc
         ldx #<file_music  // Vector pointing to a string containing loaded file name
@@ -75,8 +75,7 @@ load_error:
 
 start2:
     // turn off basic
-    lda $01
-    and #$fe
+    lda #$36
     sta $01
     // set gfx colors
     lda #BORDER_COLOR
@@ -168,7 +167,7 @@ wait_for_last_block_to_playback:
     ldy #>file_scroller
     jsr loadcompd
     bcs load_error2
-    jmp $9800  // execute next part
+    jmp $9b00  // execute next part
 
 load_error2:
     sta $0400  // display error screen code

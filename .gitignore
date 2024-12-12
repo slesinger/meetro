@@ -10,3 +10,4 @@ tools/assets/fryb*
 tools/assets/video*
 tools/krill194/**
 video/*
+data-compressed/*

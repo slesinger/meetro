@@ -15,7 +15,6 @@
 .namespace PART5_ns {
 #import "fm_const.asm"
 #import "loadersymbols-c64.inc"
-#import "cml_bmpdata.asm"
 //--------
 .const countlines = 8 //8 lines in char
 .const countchar = 16 //16 chars to shift
@@ -77,6 +76,10 @@ pbtmp:    .text "PBTMP"  //filename on diskette
           .byte $00
 pcolr:    .text "PCOLR"  //filename on diskette
           .byte $00
+cbtmp:    .text "CBTMP"  //filename on diskette
+          .byte $00
+ccolr:    .text "CCOLR"  //filename on diskette
+          .byte $00
 load_error:
     sta $0400  // display error screen code
     lda #$04
@@ -85,6 +88,33 @@ load_error:
     jmp *
 
 cont1:
+    // load bitmap
+    clc
+    ldx #<pbtmp  // Vector pointing to a string containing loaded file name
+    ldy #>pbtmp
+    jsr loadcompd
+    bcs load_error
+    // load color data
+    clc
+    ldx #<pcolr  // Vector pointing to a string containing loaded file name
+    ldy #>pcolr
+    jsr loadraw
+    bcc !+
+    jmp load_error
+!:
+    clc
+    ldx #<cbtmp  // Vector pointing to a string containing loaded file name
+    ldy #>cbtmp
+    jsr loadcompd
+    bcs load_error
+    // load color data
+    clc
+    ldx #<ccolr  // Vector pointing to a string containing loaded file name
+    ldy #>ccolr
+    jsr loadcompd
+    bcc !+
+    jmp load_error
+!:
     // copy CML to $e000
     ldy #$00
 loop01:
@@ -106,20 +136,6 @@ loop03:
     inx
     cpx #$40
     bne !-
-    // load bitmap
-    clc
-    ldx #<pbtmp  // Vector pointing to a string containing loaded file name
-    ldy #>pbtmp
-    jsr loadcompd
-    bcs load_error
-    // load color data
-    clc
-    ldx #<pcolr  // Vector pointing to a string containing loaded file name
-    ldy #>pcolr
-    jsr loadraw
-    bcc !+
-    jmp load_error
-!:
 #if RUNNING_COMPLETE
 #else
     // start music
@@ -175,7 +191,6 @@ retry_detect_sideb:
     lda #$ef
     cmp $dc01 //space?
     beq show_space
-    // jmp retry_detect_sideb
 
     // check if disk is turned
     lda my_jiffy_clock
@@ -185,8 +200,8 @@ retry_detect_sideb:
     clc
     ldx #<file_sideb
     ldy #>file_sideb
-    // jsr fileexists
-    jmp retry_detect_sideb  // branch on file not found or error, bcs
+    jsr fileexists
+    bcs retry_detect_sideb  // branch on file not found or error, bcs
     // file exists > disk is turned, continue with next part
     sei
     lda #<irq0
