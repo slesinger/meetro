@@ -1,3 +1,18 @@
+odstranit tecku
+DONE fryba text konci: humanity scramble
+DAN 3d scroller text
+silly walking - pisnicka Always look on the bright side of life
+bug 3d scroller
+directory
+
+# 3d scroller text
+
+
+privitani
+proc to jak to
+osobni zpravy
+
+
 # Hondani Meetro
 
 MIT License

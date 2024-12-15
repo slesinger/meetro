@@ -385,20 +385,20 @@ titles:
     .text "__THE_SUN_IS_GONE___"
     .text "IT_WENT_REALLY_SILLY"
 
-    .text "GREETINGS___________"
-    .text "TOPAZ_EPIC_GHOUL_JAM"
+    .text "LIFE_S_PIECE_OF_SHIT"  // TODO apostrophe
+    .text "WHEN_YOU_LOOK_AT_IT_"
 
-    .text "GREETINGS___________"
-    .text "_TRANCE_CARTEL_DEATH"
+    .text "_ALWAYS_LOOK_ON_THE_"
+    .text "BRIGHT_SIDE_OF_LIFE_"
 
-    .text "GREETINGS___________"
-    .text "CULT_SAO_BLAZE_ORIGO"
+    .text "____COME_ON_GUYS____"
+    .text "______CHEER_UP______"
 
-    .text "GREETINGS___________"
-    .text "_____ASPHYXIA_ASTRAL"
+    .text "_LIFE_IS_BEAUTIFUL__" 
+    .text "__ENJOY_EVERY_DAY___"
 
-    .text "DEMO_IS_JOINT_EFFORT"
-    .text "HONZA____DAN___ONDRA"
+    .text "REGARDS_FROM________"
+    .text "_____HONZA_DAN_ONDRA"
 
 // color in A register
 fill_color:

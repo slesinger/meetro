@@ -143,9 +143,9 @@ loop03:
     ldy #0
     lda #0
     jsr $1000
+#endif 
     lda #$36
     sta $01
-#endif 
     // set colors
     lda #BLACK  // black large empty space
     sta $d020
@@ -175,11 +175,11 @@ loop03:
     sta $0315
 
     asl $d019
-    lda #$7f
+    lda #$7b  //7f
     sta $dc0d
-    sta $dd0d
-    lda $dc0d
-    lda $dd0d
+    // sta $dd0d
+    // lda $dc0d
+    // lda $dd0d
     lda #$81
     sta $d01a
     lda #$e0  // where raster interrupt will be triggered
@@ -194,7 +194,9 @@ retry_detect_sideb:
 
     // check if disk is turned
     lda my_jiffy_clock
-    bne hide_space
+    beq !+
+    jmp hide_space
+!:
     lda #CHECK_DISK_TURN_EVERY_JIFFY
     sta my_jiffy_clock
     clc
@@ -266,7 +268,6 @@ hide_space:
 my_jiffy_clock: .byte 0
 irq0:
     asl $d019
-    jsr $1003
     jmp irq2_end
 
 irq2:
@@ -274,10 +275,10 @@ irq2:
     jsr rolchar //shift data for dot scroll
     jsr speedclear //clear plots on the bitmap
     jsr speedcode  //display plots of chars on 3d trajectory
-    // play music
-    jsr $1003
     
 irq2_end:
+    // play music
+    jsr $1003
     dec my_jiffy_clock
     pla
     tay
@@ -518,14 +519,8 @@ myscrol:
       plp     //recall status register for "i" (interrupts was blocked?)
       inc posscroll
       rts
-
-
-//==============
 posscroll: .byte 0
 cntrol:    .byte 0
-txtscrol:  .text "hondani meetro 2024   dan je guma honza je guma ondra je taky guma. vsichni jsme gumy    do not forget to give credits to wegi/bs/smr/ftm         "
-          .byte 0
-//==============
 
 //======================================================
 //after init all data and proc. below can be erase
@@ -958,4 +953,7 @@ plots:
 #import "data/scroller_data.inc"
 eplot:
 .text "end of data"
+txtscrol:  .text "hi folks, guess what?    after a long inactivity, we at hondani have figured out that we miss the old days and we want them back for a moment. after a few planning mishaps, we managed to find a date for our gathering and came together to finalize a small demo for you. please note, the story in this demo is purely fictional, please look out of the window, the sun should still be there. in case it is not, make sure to follow further instructions.     since ur here for the scroller, lets kick it off.    first cut is the deepest, they say.    them wrong.       last scroller the hardest, they say.    them know.    do it our way: code hard to become a legend. code harder to become hondani.    we know that you love our style. we know that you love our flow. we love you too.        ondra is sending greetings and hugs to barbara, mikes, and minka. barbara is impressed about the coding skills of honza and the combination of the ai and the c64. no matter if the sun is there or far away please stay sane and keep the sun in your heart.      honza here. we made it to meet and release this meetro. none of us thought this demo would grow this size. look for source code on github. thanks to dan and ondra for providing more and more ideas. i enjoyed the coding. i am happy to show using assembler to the next generation (say hi to kuba). 64kb of ram is enough for everyone. hawk.     greetings go to special old friends: topaz boozeline, success, epic, ghoul, trance, cartel, control, hysteric, the force, jam, trinomic, rebels, enduro, explora, death, the cult, sao, blaze, origo, asphyxia, vagabonds, astral, and a special hi to sam and tommi salo. big credit for the music you are listening to right now goes to marek bilinsky, credits for 3d scroller routine to wegi/bs/smr/ftm, navstevnici for coming to save the world and monty python for final cheer up.                hi folks, guess what? is there someting on the other side? try turning the disk.                              "
+          .byte 0
+
 }
