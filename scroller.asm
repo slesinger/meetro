@@ -19,7 +19,7 @@
 .const countlines = 8 //8 lines in char
 .const countchar = 16 //16 chars to shift
 .const lenloop = $62  //length loop for speedcode iteration
-.const CHECK_DISK_TURN_EVERY_JIFFY = 32
+.const CHECK_DISK_TURN_EVERY_JIFFY = 96
 
 .const storeplot = $04  //4 vector for store misc data
 .const vectr1    = $06
@@ -158,6 +158,7 @@ loop03:
     jsr makespeedcode //make long and borning code for dotscroll
                     //and setting plots for wait look
     jsr makespeedclear //like before for clear plots and set plots
+    jsr init_irq2
     cld
     jsr clearchar 
     jsr speedclear //clear plots
@@ -167,24 +168,7 @@ loop03:
     ora #%00010000  // enable screen
     sta $d011
 
-    // init irq
-    sei
-    lda #<irq2
-    sta $0314
-    lda #>irq2
-    sta $0315
-
-    asl $d019
-    lda #$7b  //7f
-    sta $dc0d
-    // sta $dd0d
-    // lda $dc0d
-    // lda $dd0d
-    lda #$81
-    sta $d01a
-    lda #$e0  // where raster interrupt will be triggered
-    sta $d012
-    cli
+    jsr init_irq2
 
     // monitor space key
 retry_detect_sideb:
@@ -233,6 +217,8 @@ retry_detect_sideb:
     jmp $9300  // jump to next part titles
 
 show_space:
+// jsr init_irq2
+// jmp retry_detect_sideb
     // set hires screen to $8000
     lda #$00
     sta $dd00
@@ -299,6 +285,23 @@ file_titles:
     .text "TI"  // font for titles
     .byte $00
 
+init_irq2:
+    sei
+    lda #<irq2
+    sta $0314
+    lda #>irq2
+    sta $0315
+    asl $d019
+    lda #$7b  //7f
+    sta $dc0d
+    // sta $dd0d
+    // lda $dc0d
+    // lda $dd0d
+    lda #$81
+    sta $d01a
+    lda #$e0  // where raster interrupt will be triggered
+    sta $d012
+    cli
 
 //==============
 //clear or fill char data
@@ -487,38 +490,45 @@ myscrol:
 //===========
 //simple scroll routine (max 256 char!!!)
 //===========
-      ldx posscroll
-      lda txtscrol,x
-      bne !+
-      sta posscroll
-      lda txtscrol
+    ldx posscroll
+mst:lda txtscrol, x
+    pha
+    bne !+
+    sta posscroll
+    lda #>txtscrol
+    sta mst + 2
 !:
-      and #$3f
-      asl
-      asl
-      asl        //char multiply 8 for addres in the chargen
-      sta vectr1
-      lda #$00
-      adc #$d0
-      sta vectr1+1      
-      php        //status register save
-      ldy #$07
-      sei
-      lda $01
-      pha      //save $01
-      lda #$33 //here is used chargen from c64 rom
-      sta $01  //you can used something own
+    pla
+    and #$3f
+    asl
+    asl
+    asl        //char multiply 8 for addres in the chargen
+    sta vectr1
+    lda #$00
+    adc #$d0
+    sta vectr1+1      
+    php        //status register save
+    ldy #$07
+    sei
+    lda $01
+    pha      //save $01
+    lda #$33 //here is used chargen from c64 rom
+    sta $01  //you can used something own
 !:
-      lda (vectr1),y
-      sta cset2,y
-      dey
-      bpl !-
-            
-      pla     //recall $01
-      sta $01
-      plp     //recall status register for "i" (interrupts was blocked?)
-      inc posscroll
-      rts
+    lda (vectr1),y
+    sta cset2,y
+    dey
+    bpl !-
+        
+    pla     //recall $01
+    sta $01
+    plp     //recall status register for "i" (interrupts was blocked?)
+    inc posscroll
+    lda posscroll
+    bne !+
+    inc mst + 2
+!:
+    rts
 posscroll: .byte 0
 cntrol:    .byte 0
 
@@ -953,7 +963,7 @@ plots:
 #import "data/scroller_data.inc"
 eplot:
 .text "end of data"
-txtscrol:  .text "hi folks, guess what?    after a long inactivity, we at hondani have figured out that we miss the old days and we want them back for a moment. after a few planning mishaps, we managed to find a date for our gathering and came together to finalize a small demo for you. please note, the story in this demo is purely fictional, please look out of the window, the sun should still be there. in case it is not, make sure to follow further instructions.     since ur here for the scroller, lets kick it off.    first cut is the deepest, they say.    them wrong.       last scroller the hardest, they say.    them know.    do it our way: code hard to become a legend. code harder to become hondani.    we know that you love our style. we know that you love our flow. we love you too.        ondra is sending greetings and hugs to barbara, mikes, and minka. barbara is impressed about the coding skills of honza and the combination of the ai and the c64. no matter if the sun is there or far away please stay sane and keep the sun in your heart.      honza here. we made it to meet and release this meetro. none of us thought this demo would grow this size. look for source code on github. thanks to dan and ondra for providing more and more ideas. i enjoyed the coding. i am happy to show using assembler to the next generation (say hi to kuba). 64kb of ram is enough for everyone. hawk.     greetings go to special old friends: topaz boozeline, success, epic, ghoul, trance, cartel, control, hysteric, the force, jam, trinomic, rebels, enduro, explora, death, the cult, sao, blaze, origo, asphyxia, vagabonds, astral, and a special hi to sam and tommi salo. big credit for the music you are listening to right now goes to marek bilinsky, credits for 3d scroller routine to wegi/bs/smr/ftm, navstevnici for coming to save the world and monty python for final cheer up.                hi folks, guess what? is there someting on the other side? try turning the disk.                              "
+txtscrol:  .text "   hi folks, guess what?    after a long inactivity, we at hondani have figured out that we miss the old days and we want them back for a moment. after a few planning mishaps, we managed to find a date for our gathering and came together to finalize a small demo for you. please note, the story in this demo is purely fictional, please look out of the window, the sun should still be there. in case it is not, make sure to follow further instructions.     since ur here for the scroller, lets kick it off.    first cut is the deepest, they say.    them wrong.       last scroller the hardest, they say.    them know.    do it our way: code hard to become a legend. code harder to become hondani.    we know that you love our style. we know that you love our flow. we love you too.        ondra is sending greetings and hugs to barbara, mikes, and minka. barbara is impressed about the coding skills of honza and the combination of the ai and the c64. no matter if the sun is there or far away please stay sane and keep the sun in your heart.      honza here. we made it to meet and release this meetro. none of us thought this demo would grow this size. look for source code on github. thanks to dan and ondra for providing more and more ideas. i enjoyed the coding. i am happy to show using assembler to the next generation (say hi to kuba). 64kb of ram is enough for everyone. hawk.     greetings go to special old friends: topaz boozeline, success, epic, ghoul, trance, cartel, control, hysteric, the force, jam, trinomic, rebels, enduro, explora, death, the cult, sao, blaze, origo, asphyxia, vagabonds, astral, and a special hi to sam and tommi salo. big credit for the music you are listening to right now goes to marek bilinsky, credits for 3d scroller routine to wegi/bs/smr/ftm, navstevnici for coming to save the world and monty python for final cheer up.                hi folks, guess what? is there someting on the other side? try turning the disk.                              "
           .byte 0
 
 }

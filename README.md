@@ -1,18 +1,3 @@
-odstranit tecku
-DONE fryba text konci: humanity scramble
-DAN 3d scroller text
-silly walking - pisnicka Always look on the bright side of life
-bug 3d scroller
-directory
-
-# 3d scroller text
-
-
-privitani
-proc to jak to
-osobni zpravy
-
-
 # Hondani Meetro
 
 MIT License
@@ -122,6 +107,7 @@ Then loop:
   - load next video part
   
 ## Part 7 - Goodbye
+cw_rounded font, 2x2.
 
 ## Disk layout
 There will be following files visible on the disk

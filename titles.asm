@@ -385,7 +385,7 @@ titles:
     .text "__THE_SUN_IS_GONE___"
     .text "IT_WENT_REALLY_SILLY"
 
-    .text "LIFE_S_PIECE_OF_SHIT"  // TODO apostrophe
+    .text "LIFE]S_PIECE_OF_SHIT"  // apostrophe == ]
     .text "WHEN_YOU_LOOK_AT_IT_"
 
     .text "_ALWAYS_LOOK_ON_THE_"
@@ -397,7 +397,7 @@ titles:
     .text "_LIFE_IS_BEAUTIFUL__" 
     .text "__ENJOY_EVERY_DAY___"
 
-    .text "REGARDS_FROM________"
+    .text "REGARDS_____________"
     .text "_____HONZA_DAN_ONDRA"
 
 // color in A register
