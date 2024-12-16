@@ -19,7 +19,7 @@
 .const countlines = 8 //8 lines in char
 .const countchar = 16 //16 chars to shift
 .const lenloop = $62  //length loop for speedcode iteration
-.const CHECK_DISK_TURN_EVERY_JIFFY = 96
+.const CHECK_DISK_TURN_EVERY_JIFFY = 255
 
 .const storeplot = $04  //4 vector for store misc data
 .const vectr1    = $06
